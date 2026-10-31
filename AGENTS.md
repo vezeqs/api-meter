@@ -1,136 +1,111 @@
 # AGENTS.md
 
-Operating instructions for anyone — human or agent — changing this repository.
-Read it before the first edit. It is short on purpose; every line here exists
-because something broke without it.
+The manual the next person needs. Every line exists because something broke
+without it.
 
 ## What this is
 
-Meter is a usage and billing front end for an API product. It answers four
-questions: how much have I used, how much is left, is anything failing, and
-what will it cost.
+Meter is a usage and billing front end for an API product: request volume,
+quota, error rate, and spend, so a metered invoice never arrives as a surprise.
+It is a demonstration build — every figure comes from a seeded generator, and
+nothing talks to a database, a payment provider, or an auth system. It is
+deployed as a static export at <https://vezeqs.github.io/api-meter/>.
 
-It is a **demonstration build**. Every figure comes from a seeded generator in
-`apps/web/lib/data.ts`. Nothing is collected from a real service, and nothing
-here talks to a database, a payment provider, or an auth system. Do not write
-copy or code that implies otherwise.
+## Entry points
 
-Deployed at <https://vezeqs.github.io/api-meter/> as a static export.
-
-## Commands
-
-| Command          | Use it when                                                |
-| ---------------- | ---------------------------------------------------------- |
-| `pnpm verify`    | Before every commit. Format, lint, typecheck, build, test. |
-| `pnpm dev`       | Iterating on UI. Serves at `/api-meter`.                   |
-| `pnpm test:unit` | Fast feedback on data and formatting. No browser.          |
-| `pnpm test:e2e`  | Needs `pnpm build` first. Audits the real export.          |
-| `pnpm preview`   | Serve the built export the way GitHub Pages does.          |
-| `pnpm capture`   | Any visual change. Regenerates `docs/`.                    |
-| `pnpm og`        | After changing brand copy or the Open Graph card.          |
-
-`pnpm build` is a prerequisite for the end-to-end suite because it runs against
-`apps/web/out`, not a dev server.
-
-## Layout
-
-```
-apps/web/app          routes; page.tsx is the landing page, dashboard/ is the app
-apps/web/components   one component per file, CSS module beside it
-apps/web/lib          data.ts (seeded data), format.ts (presentation), site.ts (URLs)
-apps/web/public       og.png, .nojekyll
-apps/api              Fastify service — skeleton, not yet consumed by the web app
-packages/shared       types and constants; the only cross-package contract
-tests/unit            node:test, no browser, no build
-tests/e2e             Playwright against the exported site
-tools/                static server, screenshot capture, OG renderer
-docs/                 screenshots and the demo GIF used by the README
-```
+| Question                                   | Answer lives in                     |
+| ------------------------------------------ | ----------------------------------- |
+| Where do the numbers come from?            | `apps/web/lib/data.ts`              |
+| How is a number written on screen?         | `apps/web/lib/format.ts`            |
+| What is the base path, what is the origin? | `apps/web/lib/site.ts`              |
+| Why does this page look like this?         | `apps/web/app/globals.css` (tokens) |
+| What did the last audit find?              | `docs/audit-2026-10-30.md`          |
+| Why is the CI shaped this way?             | `.github/workflows/ci.yml`          |
 
 ## Invariants
 
-These are the rules that are not obvious from reading one file. Breaking one
-produces a bug that the tests will catch, or worse, one they will not.
+Rules a change must not break. Each one is enforced; the test column says by
+what.
 
-**Billing and analysis are different scopes.** `getBillingCycle()` owns the
-30-day cycle, the allowance, the overage, and the quota meters.
-`getUsageSummary(range)` owns volume, error rate, endpoints, and deltas. The
-range selector must never influence a billing figure — the same account cannot
-be 30% through its allowance at 7 days and 358% at 90 days. This was a real
-bug; see `CODE_REVIEW.md`.
+| #   | Invariant                                                                                                                                  | Enforced by                                                       |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| 1   | A billing figure never moves when the chart window changes. The same account cannot be 30% through its allowance at 7 days and 358% at 90. | e2e "the quota panel is cycle-scoped"                             |
+| 2   | Spend is overage only. The plan fee is separate; charging the whole volume at the overage rate overstates the invoice.                     | unit "charges overage only", e2e "cycle spend bills overage only" |
+| 3   | Allowances and rates come from `PLANS`. No literal `2_000_000` anywhere else.                                                              | unit "takes the requests allowance from the plan"                 |
+| 4   | Endpoint totals reconcile with the headline figure within 2%.                                                                              | unit + e2e "endpoint totals reconcile"                            |
+| 5   | Rendering is deterministic: fixed seed, fixed `REFERENCE_DATE`, no `Date.now()` or `Math.random()` during render.                          | hydration — any mismatch is visible immediately                   |
+| 6   | Every internal link carries `/api-meter`.                                                                                                  | e2e "links point through the deployment base path"                |
+| 7   | A meter never reports `aria-valuenow` above `aria-valuemax`.                                                                               | e2e "the over-limit meter reports a valid ARIA range"             |
+| 8   | No horizontal page overflow at 1440, 768, 390, or 320 px.                                                                                  | e2e "no horizontal page overflow"                                 |
+| 9   | Every text colour clears 4.5:1 in light and dark.                                                                                          | e2e axe-core, both themes                                         |
+| 10  | Every image the README shows exists and has the expected dimensions.                                                                       | unit `assets.test.ts`                                             |
 
-**Spend is overage only.** The plan fee is billed separately. Charging the full
-volume at the overage rate overstates the invoice by 5x in this dataset.
+## Commands
 
-**Limits come from the plan.** `PLANS` in `packages/shared` is the single
-source for included requests and overage rates. A literal `2_000_000` anywhere
-else will drift the moment pricing changes.
+```sh
+pnpm verify      # format, lint, typecheck, build, unit, e2e — the proof
+pnpm dev         # http://localhost:3000/api-meter/
+pnpm test:unit   # fast, no browser, no build
+pnpm test:e2e    # needs pnpm build first; runs against apps/web/out
+pnpm capture     # regenerate docs/ after any visual change
+pnpm og          # regenerate apps/web/public/og.png
+```
 
-**The data is deterministic.** `REFERENCE_DATE` is fixed and every series comes
-from `mulberry32` with a constant seed. Never call `Date.now()` or
-`Math.random()` during render — the page is prerendered, so the client would
-compute different values and hydration would mismatch.
+## Sharp edges
 
-**One origin, one subpath.** `SITE_URL` is the origin; `BASE_PATH` is
-`/api-meter`. `absoluteUrl()` joins them. Never concatenate by hand, and never
-hardcode `/api-meter` in a link — `next/link` applies it.
+Traps that have already produced a bug in this repository. Read this before
+touching the area it mentions.
 
-**The site is a static export.** No server components with request data, no
-route handlers, no middleware, no `dynamic = "force-dynamic"`.
-
-**Scroll containers need `position: relative`.** The table headers contain
+**Scroll containers need `position: relative`.** Table headers contain
 absolutely positioned visually-hidden labels. Without a containing block they
-anchor to the page and give every table page a horizontal scrollbar.
+anchor to the page and give every table page a horizontal scrollbar. This
+looked like a `min-width` bug and was not.
 
-**Colour is a contract.** Use the tokens in `globals.css`. Every text colour
-must clear 4.5:1 against its surface in both themes; the accessibility suite
-enforces this, and `--ink-3` is the lightest value that passes.
+**Billing and analysis are separate scopes.** `getBillingCycle()` owns the
+cycle, allowance, overage, and meters. `getUsageSummary(range)` owns volume,
+error rate, and endpoints. Feeding one into the other is how the product told
+two different stories about the same account.
 
-## Change checklist
+**`formatCompact` must promote.** `999_999` is `1.00M`, never `1000K`. The unit
+is chosen from the raw value, so the rounded value has to be re-checked.
+
+**ARIA meters clamp.** An over-limit meter reports `aria-valuenow ===
+aria-valuemax` and carries the overage in `aria-valuetext`. axe-core does not
+catch an inverted range.
+
+**`SITE_URL` is the origin; `BASE_PATH` is the subpath.** Concatenating them
+by hand once produced `/api-meter/meter`. Use `absoluteUrl()`, and let
+`next/link` handle link prefixes.
+
+**Playwright drops the path from `baseURL`.** A route written as `/dashboard`
+resolves against the origin, not the subpath, so the suite silently tested the
+wrong page. Routes in `tests/e2e` carry `/api-meter` explicitly for this
+reason.
+
+**The README's numbers are claims.** They were once wrong by a factor of two.
+Measure with the command in the README before changing one.
+
+**`.env.example` lists what is read.** Fourteen variables were once advertised
+that nothing consumed — a database, auth, SMTP, Stripe, Sentry. A contributor
+reasonably believed all of it existed.
+
+## Definition of done
 
 - [ ] `pnpm verify` passes.
-- [ ] Any new number on screen is derived, not typed in.
-- [ ] Any new interactive control is reachable and operable by keyboard.
-- [ ] Any visual change is followed by `pnpm capture`.
-- [ ] Any new environment variable is added to `.env.example` **and** is
-      actually read somewhere.
+- [ ] New numbers are derived, not typed in.
+- [ ] New controls are reachable and operable by keyboard.
+- [ ] Visual changes are followed by `pnpm capture`.
+- [ ] New environment variables are added to `.env.example` **and** read somewhere.
 - [ ] No secrets, `.env` files, build output, or capture frames staged.
+- [ ] `CHANGELOG.md` has an entry under the right heading.
 
-## Symptom to cause
+## What not to touch
 
-| Symptom                                         | Cause                                                                                    |
-| ----------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| Horizontal scrollbar on a table page            | An absolutely positioned element escaped its scroll container. Add `position: relative`. |
-| Quota percentage moves with the range selector  | A billing value is being fed from `getUsageSummary`.                                     |
-| Links 404 on GitHub Pages, work locally         | A path bypassed `next/link` or `absoluteUrl`.                                            |
-| Text flickers or React logs a hydration warning | Non-deterministic value during render.                                                   |
-| `tsc` fails on a fresh clone                    | `packages/shared` has not been built. Run `pnpm build`.                                  |
-| Table column looks misaligned                   | A non-monospace figure, or a missing `.num` class.                                       |
-| `1000K` in a column                             | `formatCompact` regressed; it must promote to `1.00M`.                                   |
-
-## Style
-
-- TypeScript strict. No `any`, no `@ts-ignore` without a written reason.
-- `import type` for types; `verbatimModuleSyntax` is on.
-- ESM only in `apps/api` and `packages/shared`; relative imports need `.js`.
-- No UI framework, CSS framework, or charting library. The restraint is the
-  design. Hand-written CSS Modules and inline SVG only.
-- Numbers use the `num` class: tabular figures, monospace, aligned.
-
-## Release
-
-1. Update `CHANGELOG.md`: move `Unreleased` under a version and a date.
-2. `pnpm verify`.
-3. Commit, then `git tag -a vX.Y.Z -m "..."`.
-4. Push the branch, then the tag.
-5. The deploy workflow publishes `apps/web/out` to Pages on every push to
-   `main`.
-
-## Do not
-
-- Reformat files you were not asked to touch.
-- Weaken a test, an ESLint rule, or a colour to make a failure disappear.
-- Add a dependency without saying what it replaces.
-- Present this demo as a production service.
-- Change the licence. It is MIT; keep the copyright notice.
-- Force-push or rewrite published history.
+- **The licence.** MIT; keep the copyright notice.
+- **`REFERENCE_DATE` and the PRNG seed.** Changing either reshapes every
+  screenshot and every assertion.
+- **Unrelated files' formatting.** Prettier decides; do not hand-reflow.
+- **The no-dependency rule.** No UI framework, CSS framework, or charting
+  library. The restraint is the design.
+- **A failing check.** Fix the cause. Never weaken a test, an ESLint rule, or a
+  colour to make it pass.

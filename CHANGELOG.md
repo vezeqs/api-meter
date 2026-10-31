@@ -4,6 +4,28 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-10-30
+
+Documentation and test hardening. No change to the product.
+
+### Added
+
+- Asset integrity tests. Every image the README references must exist, be
+  non-empty, and match its expected dimensions; the demo GIF must loop and stay
+  under two megabytes. Screenshots are generated, so something has to fail when
+  they rot.
+- A reproduction command and observed output for each audit finding.
+
+### Changed
+
+- The audit moved to `docs/audit-2026-10-30.md`, in the same `docs/` directory
+  as the images it refers to, and every finding now carries a claim, evidence,
+  cause, fix, and status.
+- `AGENTS.md` is organised around invariants and sharp edges rather than
+  general advice.
+- README figures re-measured against the tree and paired with the command that
+  produces them.
+
 ## [1.0.0] - 2026-10-30
 
 First tagged release. The dashboard is complete, audited, and deployed.
@@ -20,7 +42,8 @@ First tagged release. The dashboard is complete, audited, and deployed.
   owns volume, error rate, and endpoints.
 - Deterministic data layer with a fixed seed and fixed reference date, so the
   prerendered HTML and the client render always agree.
-- Unit test suite on `node:test` for formatting and billing arithmetic.
+- Unit test suite on `node:test` for formatting, billing arithmetic, and asset
+  integrity.
 - Playwright suite covering layout, console health, document structure,
   base-path correctness, SEO output, axe-core under WCAG 2.1 AA in both
   themes, and the behaviour of every control.
@@ -82,5 +105,6 @@ First tagged release. The dashboard is complete, audited, and deployed.
 - Issue templates, pull request template, and Dependabot configuration.
 - MIT license, security policy, contribution guide, and code of conduct.
 
+[1.0.1]: https://github.com/vezeqs/api-meter/tree/v1.0.1
 [1.0.0]: https://github.com/vezeqs/api-meter/tree/v1.0.0
 [0.1.0]: https://github.com/vezeqs/api-meter/commits/main

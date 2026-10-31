@@ -82,10 +82,10 @@ at the live deployment:
 PLAYWRIGHT_ORIGIN=https://vezeqs.github.io pnpm test:e2e
 ```
 
-| Suite                   | Count | Covers                                                                        |
-| ----------------------- | ----- | ----------------------------------------------------------------------------- |
-| Unit (`node:test`)      | 16    | Number formatting, unit rollover, billing arithmetic, endpoint reconciliation |
-| End-to-end (Playwright) | 43    | Layout, console health, SEO output, axe-core, every control                   |
+| Suite                   | Count | Covers                                                                                         |
+| ----------------------- | ----- | ---------------------------------------------------------------------------------------------- |
+| Unit (`node:test`)      | 32    | Number formatting, unit rollover, billing arithmetic, endpoint reconciliation, asset integrity |
+| End-to-end (Playwright) | 43    | Layout, console health, SEO output, axe-core, every control                                    |
 
 The end-to-end suite checks, on all three routes:
 
@@ -104,10 +104,10 @@ confirmation, key creation, and the four billing invariants above.
 
 ## Code review
 
-[`CODE_REVIEW.md`](CODE_REVIEW.md) records a full review of the previous
-revision: fifteen findings, each reproduced before it was fixed, with the fix
-and its regression cover. Two were billing defects that misstated the invoice.
-One was a false claim in this README.
+[`docs/audit-2026-10-30.md`](docs/audit-2026-10-30.md) records a full review of
+the previous revision: fifteen findings, each reproduced with a command before
+it was fixed, with the fix and its regression cover. Two were billing defects
+that misstated the invoice. One was a false claim in this README.
 
 ## Stack
 
@@ -120,8 +120,13 @@ One was a false claim in this README.
 | Tests     | `node:test` + Playwright with axe-core         |
 | Workspace | pnpm + Turborepo                               |
 
-The web app is 1,810 lines of TypeScript and 1,524 lines of CSS, with no UI
-framework, no CSS framework, and no charting library.
+The web app is 1,807 lines of TypeScript and 1,524 lines of CSS, with no UI
+framework, no CSS framework, and no charting library. Count it yourself:
+
+```sh
+find apps/web/app apps/web/components apps/web/lib -type f \
+  \( -name '*.ts' -o -name '*.tsx' -o -name '*.css' \) | xargs wc -l | tail -1
+```
 
 ## Getting started
 
