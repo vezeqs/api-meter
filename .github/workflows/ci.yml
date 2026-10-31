@@ -38,6 +38,8 @@ jobs:
         run: pnpm build
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
+      - name: Tool smoke test
+        run: pnpm test:tools
       - name: End-to-end tests
         run: pnpm test:e2e
       - name: Smoke test the API

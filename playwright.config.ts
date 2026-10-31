@@ -1,7 +1,11 @@
 import { defineConfig } from "@playwright/test";
+import { BASE_PATH as SITE_BASE_PATH } from "./apps/web/lib/site-config.mjs";
 
 const PORT = Number(process.env.PORT ?? 4321);
-const BASE_PATH = "/api-meter";
+
+// The mount must match what serve-export uses: the documented site base path,
+// with BASE_PATH kept as the shared explicit override.
+const BASE_PATH = process.env.BASE_PATH ?? SITE_BASE_PATH;
 
 /**
  * The origin only. Routes in the suite carry the deployment subpath, so the

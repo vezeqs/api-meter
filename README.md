@@ -82,12 +82,13 @@ at the live deployment:
 PLAYWRIGHT_ORIGIN=https://vezeqs.github.io pnpm test:e2e
 ```
 
-| Suite                   | What it proves                                                                                               |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Unit (`node:test`)      | Number formatting, unit rollover, billing arithmetic, endpoint reconciliation, asset integrity, tool hygiene |
-| End-to-end (Playwright) | Layout, console health, SEO output, axe-core, every control                                                  |
+| Suite                    | What it proves                                                                                               |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| Unit (`node:test`)       | Number formatting, unit rollover, billing arithmetic, endpoint reconciliation, asset integrity, tool hygiene |
+| End-to-end (Playwright)  | Layout, console health, SEO output, axe-core, every control                                                  |
+| Tool smoke (`node:test`) | The Open Graph card renders; the capture tool resolves its imports                                           |
 
-`pnpm test` prints the count for both suites. Per-release figures live in
+`pnpm test` prints the count for each suite. Per-release figures live in
 [`CHANGELOG.md`](CHANGELOG.md), where a snapshot is dated and cannot silently
 drift.
 
@@ -109,10 +110,14 @@ confirmation, key creation, and the four billing invariants above.
 
 ## Code review
 
-[`docs/audit-2026-10-30.md`](docs/audit-2026-10-30.md) records a full review of
-the previous revision: fifteen findings, each reproduced with a command before
-it was fixed, with the fix and its regression cover. Two were billing defects
-that misstated the invoice. One was a false claim in this README.
+The repository has been audited three times, each pass recorded in a dated
+file under `docs/` with a command that reproduces every finding before it was
+fixed: [fifteen findings](docs/audit-2026-10-30.md) including two billing
+defects and a false claim in this README, [six more](docs/audit-2026-10-31.md)
+mostly in the verification itself, and [fourteen](docs/audit-2026-10-31-third-pass.md)
+in the third pass — a preview server that dies on a malformed `Host` header,
+an OG card quoting quotas the product disowns, and a `pnpm test:unit` that
+secretly needed a build.
 
 ## Stack
 
@@ -125,8 +130,8 @@ that misstated the invoice. One was a false claim in this README.
 | Tests     | `node:test` + Playwright with axe-core         |
 | Workspace | pnpm + Turborepo                               |
 
-The web app is 1,807 lines of TypeScript and 1,524 lines of CSS, with no UI
-framework, no CSS framework, and no charting library. Count it yourself:
+The web app is hand-written TypeScript and CSS Modules, with no UI framework,
+no CSS framework, and no charting library. Count it yourself:
 
 ```sh
 find apps/web/app apps/web/components apps/web/lib -type f \
@@ -139,7 +144,7 @@ Requires Node 24 (see `.nvmrc`) and pnpm 10.34.8 (pinned in `packageManager`).
 
 ```sh
 pnpm install
-pnpm exec playwright install chromium   # once, for the end-to-end suite
+pnpm exec playwright install chromium   # once, for the end-to-end and tool suites
 pnpm build
 pnpm preview
 ```
@@ -155,17 +160,18 @@ pnpm dev    # http://localhost:3000/api-meter/
 
 ## Commands
 
-| Command                        | What it does                                           |
-| ------------------------------ | ------------------------------------------------------ |
-| `pnpm verify`                  | Format, lint, typecheck, build, then every test        |
-| `pnpm dev`                     | Run the apps in watch mode                             |
-| `pnpm build`                   | Build every package, export the site to `apps/web/out` |
-| `pnpm preview`                 | Serve the export at a GitHub Pages-like subpath        |
-| `pnpm test:unit`               | Data and formatting tests, no browser                  |
-| `pnpm test:e2e`                | Playwright audit against the built export              |
-| `pnpm lint` / `pnpm typecheck` | ESLint / `tsc --noEmit` across the workspace           |
-| `pnpm capture`                 | Regenerate the screenshots and GIF in `docs/`          |
-| `pnpm og`                      | Regenerate `apps/web/public/og.png`                    |
+| Command                        | What it does                                                 |
+| ------------------------------ | ------------------------------------------------------------ |
+| `pnpm verify`                  | Format, lint, typecheck, build, then every test              |
+| `pnpm dev`                     | Run the apps in watch mode                                   |
+| `pnpm build`                   | Build every package, export the site to `apps/web/out`       |
+| `pnpm preview`                 | Serve the export at a GitHub Pages-like subpath              |
+| `pnpm test:unit`               | Data and formatting tests, no browser                        |
+| `pnpm test:e2e`                | Playwright audit against the built export                    |
+| `pnpm test:tools`              | Smoke-render the card and resolve the capture tool           |
+| `pnpm lint` / `pnpm typecheck` | ESLint / `tsc --noEmit` across the workspace                 |
+| `pnpm capture`                 | Regenerate the screenshots and GIF in `docs/` (needs ffmpeg) |
+| `pnpm og`                      | Regenerate `apps/web/public/og.png`                          |
 
 ## Deployment
 

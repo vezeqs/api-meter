@@ -11,9 +11,14 @@ import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
+import { BASE_PATH as SITE_BASE_PATH } from "../apps/web/lib/site-config.mjs";
 
 const ROOT = normalize(fileURLToPath(new URL("../apps/web/out/", import.meta.url)));
-const PREFIX = process.env.BASE_PATH ?? "/api-meter";
+
+// The mount defaults to the site's own base path so the documented
+// NEXT_PUBLIC_BASE_PATH drives the build and the preview identically.
+// BASE_PATH remains as an explicit override.
+const PREFIX = process.env.BASE_PATH ?? SITE_BASE_PATH;
 const PORT = Number(process.env.PORT ?? 4321);
 const HOST = process.env.HOST ?? "127.0.0.1";
 
@@ -41,12 +46,27 @@ function contentType(filePath) {
 async function resolveFile(pathname) {
   let relative = pathname;
 
-  if (relative === PREFIX) relative = "/";
-  if (relative.startsWith(`${PREFIX}/`)) relative = relative.slice(PREFIX.length);
+  if (relative === PREFIX) {
+    relative = "/";
+  } else if (relative.startsWith(`${PREFIX}/`)) {
+    relative = relative.slice(PREFIX.length);
+  } else {
+    // Outside the mount GitHub Pages answers 404. Serving the export at the
+    // root would let an unprefixed link pass locally and die in production.
+    return null;
+  }
 
   if (relative === "/" || relative === "") relative = "/index.html";
 
-  const candidate = normalize(join(ROOT, decodeURIComponent(relative)));
+  let decoded;
+  try {
+    decoded = decodeURIComponent(relative);
+  } catch {
+    // A bare % is a client error, not a reason to take the server down.
+    return null;
+  }
+
+  const candidate = normalize(join(ROOT, decoded));
 
   // Refuse anything that escapes the export directory.
   if (candidate !== ROOT.replace(/\/$/, "") && !candidate.startsWith(ROOT)) {
@@ -67,7 +87,17 @@ async function resolveFile(pathname) {
 }
 
 const server = createServer(async (request, response) => {
-  const url = new URL(request.url ?? "/", `http://${request.headers.host ?? HOST}`);
+  let url;
+  try {
+    // The Host header is client input: a malformed one makes new URL throw,
+    // and an exception in this async handler takes the whole server down.
+    url = new URL(request.url ?? "/", `http://${request.headers.host ?? HOST}`);
+  } catch {
+    response.writeHead(400, { "content-type": MIME[".txt"] });
+    response.end("Bad request");
+    return;
+  }
+
   const filePath = await resolveFile(url.pathname);
 
   if (!filePath) {

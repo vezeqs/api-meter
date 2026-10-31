@@ -5,10 +5,13 @@
  *
  * SITE_URL is the origin only. BASE_PATH is the subpath, with no trailing
  * slash. Everything else is derived so the two can never double up.
+ *
+ * The constants live in `site-config.mjs` because the Node tools in `tools/`
+ * cannot import TypeScript. This module re-exports them for the app.
  */
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://vezeqs.github.io";
+import { BASE_PATH, SITE_URL } from "./site-config.mjs";
 
-export const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "/api-meter";
+export { BASE_PATH, SITE_URL };
 
 export function absoluteUrl(pathname: string): string {
   const suffix = pathname === "/" ? "/" : pathname;

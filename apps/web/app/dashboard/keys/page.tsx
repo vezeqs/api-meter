@@ -102,7 +102,7 @@ export default function KeysPage() {
   }
 
   const activeCount = keys.filter((key) => key.status === "active").length;
-  const createdName = createdId ? (keys.find((key) => key.id === createdId)?.name ?? "") : "";
+  const createdKey = createdId ? keys.find((key) => key.id === createdId) : undefined;
 
   return (
     <div className={styles.page}>
@@ -110,7 +110,8 @@ export default function KeysPage() {
         <div>
           <h1 className={styles.title}>API keys</h1>
           <p className={styles.sub}>
-            {activeCount} active of {keys.length}. A key is shown in full once, at creation.
+            {activeCount} active of {keys.length}. A new key is shown in full once; existing keys
+            can be revealed again.
           </p>
         </div>
       </header>
@@ -256,7 +257,7 @@ export default function KeysPage() {
       </div>
 
       <p className="visually-hidden" aria-live="polite">
-        {createdName ? `Key ${createdName} created and revealed.` : ""}
+        {createdKey ? `Key ${createdKey.name} (${createdKey.prefix}) created and revealed.` : ""}
       </p>
 
       <section className={styles.note} aria-labelledby="key-note-heading">
@@ -264,8 +265,9 @@ export default function KeysPage() {
           Handling
         </h2>
         <p>
-          A secret is written once and never returned again. Store it in the environment of the
-          service that uses it, not in a repository. Revoking takes effect on the next request.
+          A created secret is shown in full once, at creation; an existing one can be revealed again
+          here. Keep secrets in the environment of the service that uses them, never in a
+          repository. Revoking takes effect on the next request.
         </p>
       </section>
     </div>
