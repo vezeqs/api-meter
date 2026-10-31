@@ -229,6 +229,11 @@ test:unit` (all 49 pass). The clean-clone path is also what makes the
 regression visible, so no further guard is needed: if the condition breaks,
 every data and format test fails at once.
 
+> Postscript (fourth pass, same day): F22–F24's preview-server tests then
+> served `apps/web/out`, so `pnpm test:unit` still needed a build and CI's
+> unit step failed on the merge commit. The fourth pass
+> (`docs/audit-2026-10-31-fourth-pass.md`) records and fixes it.
+
 ## F28 — The chart's crosshair dot is an ellipse (Medium)
 
 **Claim:** the sparkline's own comment — "a dot becomes an ellipse on a narrow

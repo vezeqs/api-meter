@@ -27,26 +27,27 @@ deployed as a static export at <https://vezeqs.github.io/api-meter/>.
 Rules a change must not break. Each one is enforced; the test column says by
 what.
 
-| #   | Invariant                                                                                                                                     | Enforced by                                                       |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| 1   | A billing figure never moves when the chart window changes. The same account cannot be 30% through its allowance at 7 days and 358% at 90.    | e2e "the quota panel is cycle-scoped"                             |
-| 2   | Spend is overage only. The plan fee is separate; charging the whole volume at the overage rate overstates the invoice.                        | unit "charges overage only", e2e "cycle spend bills overage only" |
-| 3   | Allowances and rates come from `PLANS`. No literal `2_000_000` anywhere else.                                                                 | unit "takes the requests allowance from the plan"                 |
-| 4   | Endpoint totals reconcile with the headline figure within 2%.                                                                                 | unit + e2e "endpoint totals reconcile"                            |
-| 5   | Rendering is deterministic: fixed seed, fixed `REFERENCE_DATE`, no `Date.now()` or `Math.random()` during render.                             | hydration — any mismatch is visible immediately                   |
-| 6   | Every internal link carries `/api-meter`.                                                                                                     | e2e "links point through the deployment base path"                |
-| 7   | A meter never reports `aria-valuenow` above `aria-valuemax`.                                                                                  | e2e "the over-limit meter reports a valid ARIA range"             |
-| 8   | No horizontal page overflow at 1440, 768, 390, or 320 px.                                                                                     | e2e "no horizontal page overflow"                                 |
-| 9   | Every text colour clears 4.5:1 in light and dark.                                                                                             | e2e axe-core, both themes                                         |
-| 10  | Every image the README shows exists and has the expected dimensions.                                                                          | unit `assets.test.ts`                                             |
-| 11  | No tool hardcodes the deployment host or the preview port and subpath — and neither does the test harness.                                    | unit `tools.test.ts`                                              |
-| 12  | The preview server only answers under the deployment subpath and survives malformed request input (headers included).                         | unit "serves only under the deployment subpath", "malformed Host" |
-| 13  | A figure that names a plan, quota, or price is derived from `PLANS` / the billing cycle — never typed. This includes copy, badges, and cards. | unit `copy.test.ts`, unit `og.test.ts`                            |
+| #   | Invariant                                                                                                                                     | Enforced by                                                            |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| 1   | A billing figure never moves when the chart window changes. The same account cannot be 30% through its allowance at 7 days and 358% at 90.    | e2e "the quota panel is cycle-scoped"                                  |
+| 2   | Spend is overage only. The plan fee is separate; charging the whole volume at the overage rate overstates the invoice.                        | unit "charges overage only", e2e "cycle spend bills overage only"      |
+| 3   | Allowances and rates come from `PLANS`. No literal `2_000_000` anywhere else.                                                                 | unit "takes the requests allowance from the plan"                      |
+| 4   | Endpoint totals reconcile with the headline figure within 2%.                                                                                 | unit + e2e "endpoint totals reconcile"                                 |
+| 5   | Rendering is deterministic: fixed seed, fixed `REFERENCE_DATE`, no `Date.now()` or `Math.random()` during render.                             | hydration — any mismatch is visible immediately                        |
+| 6   | Every internal link carries `/api-meter`.                                                                                                     | e2e "links point through the deployment base path"                     |
+| 7   | A meter never reports `aria-valuenow` above `aria-valuemax`.                                                                                  | e2e "the over-limit meter reports a valid ARIA range"                  |
+| 8   | No horizontal page overflow at 1440, 768, 390, or 320 px.                                                                                     | e2e "no horizontal page overflow"                                      |
+| 9   | Every text colour clears 4.5:1 in light and dark.                                                                                             | e2e axe-core, both themes                                              |
+| 10  | Every image the README shows exists and has the expected dimensions.                                                                          | unit `assets.test.ts`                                                  |
+| 11  | No tool hardcodes the deployment host or the preview port and subpath — and neither does the test harness.                                    | unit `tools.test.ts`                                                   |
+| 12  | The preview server only answers under the deployment subpath and survives malformed request input (headers included).                         | unit "serves only under the deployment subpath", "malformed Host"      |
+| 13  | A figure that names a plan, quota, or price is derived from `PLANS` / the billing cycle — never typed. This includes copy, badges, and cards. | unit `copy.test.ts`, unit `og.test.ts`                                 |
+| 14  | `pnpm test:unit` passes on a clean clone: no `apps/web/out`, no `packages/shared/dist`.                                                       | `pnpm verify` runs unit before build; preview tests use a temp fixture |
 
 ## Commands
 
 ```sh
-pnpm verify      # format, lint, typecheck, build, unit, e2e, tool smoke — the proof
+pnpm verify      # format, lint, typecheck, unit (no build), build, e2e, tool smoke — the proof
 pnpm dev         # http://localhost:3000/api-meter/
 pnpm test:unit   # fast, no browser, no build
 pnpm test:e2e    # needs `pnpm build`, plus a one-time `pnpm exec playwright install chromium`
@@ -149,7 +150,10 @@ positioned by percentage — the sparkline learned this first.
 **A test command must pass on a clean clone.** `pnpm test:unit` resolved
 `@production/shared` to gitignored `dist/`; CI masked it because turbo's
 `^build` ran first. The `source` export condition points the suite at `src/`.
-If a command needs a build, say so — or make it not.
+Then the preview-server tests served `apps/web/out` — absent in CI, which runs
+unit before build — and failed with four 404s. They now point `EXPORT_ROOT` at
+a temp fixture, and `pnpm verify` runs unit before build so the claim stays
+tested. If a command needs a build, say so — or make it not.
 
 **Decorative numbers drift.** The OG card typed "1.84M/2.00M" and "Seats 3 of
 5" — a meter F7 removed for contradicting the plan record. Any surface that
