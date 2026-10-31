@@ -16,7 +16,7 @@ import { chromium } from "@playwright/test";
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const DOCS = join(ROOT, "docs");
 const FRAMES = join(DOCS, ".frames");
-const BASE = "http://127.0.0.1:4321/meter";
+const BASE = "http://127.0.0.1:4321/api-meter";
 
 async function waitForServer(url, attempts = 60) {
   for (let attempt = 0; attempt < attempts; attempt += 1) {

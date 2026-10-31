@@ -30,7 +30,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Endpoint totals were multiplied by the number of days in the period, so the
   table summed to roughly thirty times the headline figure.
 - The base path defaulted to empty in `next.config.ts` while links assumed
-  `/meter`, which broke every internal link in the export.
+  `/api-meter`, which broke every internal link in the export.
 - A visually-hidden table header anchored to the page instead of its scroll
   container, giving every table page a horizontal scrollbar.
 - `--ink-3` sat at 3.2:1 against the page, below the 4.5:1 minimum.

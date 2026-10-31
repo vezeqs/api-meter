@@ -1,7 +1,7 @@
 import { defineConfig } from "@playwright/test";
 
 const PORT = Number(process.env.PORT ?? 4321);
-const BASE_PATH = "/meter";
+const BASE_PATH = "/api-meter";
 
 export default defineConfig({
   testDir: "./tests/e2e",

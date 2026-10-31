@@ -3,7 +3,7 @@
 Usage and billing for API products. Request volume, quota consumption, error
 rate, and spend, in one place, so a metered bill never arrives as a surprise.
 
-**[Live preview →](https://vezeqs.github.io/meter/)**
+**[Live preview →](https://vezeqs.github.io/api-meter/)**
 
 ![The Meter dashboard: request volume, quota meters, and an endpoint table](docs/demo.gif)
 
@@ -70,7 +70,7 @@ pnpm build
 pnpm preview
 ```
 
-Then open <http://127.0.0.1:4321/meter/>. `pnpm preview` serves the exported
+Then open <http://127.0.0.1:4321/api-meter/>. `pnpm preview` serves the exported
 site from a subpath, the same way GitHub Pages will.
 
 For development with reloading:
@@ -79,7 +79,7 @@ For development with reloading:
 pnpm dev
 ```
 
-The app is served at <http://localhost:3000/meter/>.
+The app is served at <http://localhost:3000/api-meter/>.
 
 ## Commands
 
@@ -98,7 +98,7 @@ The app is served at <http://localhost:3000/meter/>.
 
 ## Testing
 
-The suite runs against the exported build served from `/meter`, so it exercises
+The suite runs against the exported build served from `/api-meter`, so it exercises
 the real deployment shape rather than a root-mounted dev server.
 
 ```sh

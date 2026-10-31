@@ -8,7 +8,7 @@
  */
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://vezeqs.github.io";
 
-export const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "/meter";
+export const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "/api-meter";
 
 export function absoluteUrl(pathname: string): string {
   const suffix = pathname === "/" ? "/" : pathname;

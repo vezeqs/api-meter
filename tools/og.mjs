@@ -107,7 +107,7 @@ const html = `<!doctype html>
     </div>
     <div class="footer">
       <span>Usage and billing for API products</span>
-      <span>vezeqs.github.io/meter</span>
+      <span>vezeqs.github.io/api-meter</span>
     </div>
   </body>
 </html>`;

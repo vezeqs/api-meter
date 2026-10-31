@@ -13,7 +13,7 @@ import { extname, join, normalize, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = normalize(fileURLToPath(new URL("../apps/web/out/", import.meta.url)));
-const PREFIX = process.env.BASE_PATH ?? "/meter";
+const PREFIX = process.env.BASE_PATH ?? "/api-meter";
 const PORT = Number(process.env.PORT ?? 4321);
 const HOST = process.env.HOST ?? "127.0.0.1";
 

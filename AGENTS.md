@@ -66,7 +66,7 @@ The site is a static export served from a subpath. This shapes the code:
 - `output: "export"` in `next.config.ts`. No server components with request
   data, no route handlers, no middleware, no dynamic routes without
   `generateStaticParams`.
-- `BASE_PATH` is `/meter` by default. Every internal link goes through
+- `BASE_PATH` is `/api-meter` by default. Every internal link goes through
   `next/link` or `lib/site.ts` so the prefix is applied once.
 - `SITE_URL` is the origin only. `BASE_PATH` is the subpath. Concatenating them
   is `absoluteUrl`'s job; do not do it by hand.
@@ -79,7 +79,7 @@ The site is a static export served from a subpath. This shapes the code:
 pnpm build && pnpm test
 ```
 
-The suite runs against `apps/web/out` served from `/meter`, which is why a
+The suite runs against `apps/web/out` served from `/api-meter`, which is why a
 build is required first. It checks console health, horizontal overflow at four
 widths, document structure, base-path correctness, sitemap and robots content,
 axe-core under WCAG 2.1 AA in both themes, and the behaviour of every
@@ -90,7 +90,7 @@ per-endpoint totals must sum to the headline figure within two percent.
 
 ## Common mistakes
 
-- Hardcoding `/meter` in a link or asset path instead of using `next/link` or
+- Hardcoding `/api-meter` in a link or asset path instead of using `next/link` or
   `absoluteUrl`.
 - Putting `position: absolute` content inside a horizontally scrolling
   container without making that container a containing block. The

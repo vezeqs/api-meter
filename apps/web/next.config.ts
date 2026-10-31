@@ -5,7 +5,7 @@ import type { NextConfig } from "next";
  * so the app is exported as static files. NEXT_PUBLIC_BASE_PATH carries the
  * repository name at build time; it is empty for local development.
  */
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "/meter";
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "/api-meter";
 
 const nextConfig: NextConfig = {
   output: "export",

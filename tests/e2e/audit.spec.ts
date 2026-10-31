@@ -85,7 +85,7 @@ test.describe("document structure", () => {
       );
 
       for (const href of internal) {
-        expect(href, `${href} is missing the base path`).toMatch(/^\/meter(\/|$)/);
+        expect(href, `${href} is missing the base path`).toMatch(/^\/api-meter(\/|$)/);
       }
     });
   }
@@ -98,7 +98,7 @@ test.describe("search engine handling", () => {
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /index/);
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
       "href",
-      "https://vezeqs.github.io/meter/",
+      "https://vezeqs.github.io/api-meter/",
     );
   });
 
@@ -123,7 +123,7 @@ test.describe("search engine handling", () => {
     expect(response.status()).toBe(200);
 
     const body = await response.text();
-    expect(body).toContain("<loc>https://vezeqs.github.io/meter/</loc>");
+    expect(body).toContain("<loc>https://vezeqs.github.io/api-meter/</loc>");
   });
 
   test("robots.txt blocks the dashboard under the base path", async ({ request }) => {
@@ -131,8 +131,8 @@ test.describe("search engine handling", () => {
     expect(response.status()).toBe(200);
 
     const body = await response.text();
-    expect(body).toContain("Disallow: /meter/dashboard");
-    expect(body).toContain("Sitemap: https://vezeqs.github.io/meter/sitemap.xml");
+    expect(body).toContain("Disallow: /api-meter/dashboard");
+    expect(body).toContain("Sitemap: https://vezeqs.github.io/api-meter/sitemap.xml");
   });
 });
 
@@ -187,7 +187,7 @@ test.describe("routing", () => {
     await page.goto("/");
     await page.getByRole("link", { name: "Open the dashboard" }).click();
 
-    await expect(page).toHaveURL(/\/meter\/dashboard\/$/);
+    await expect(page).toHaveURL(/\/api-meter\/dashboard\/$/);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Overview");
   });
 });
