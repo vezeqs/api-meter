@@ -9,11 +9,19 @@
  */
 import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
-import { extname, join, normalize } from "node:path";
+import { extname, join, normalize, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { BASE_PATH as SITE_BASE_PATH } from "../apps/web/lib/site-config.mjs";
 
-const ROOT = normalize(fileURLToPath(new URL("../apps/web/out/", import.meta.url)));
+// The build writes apps/web/out. EXPORT_ROOT lets the unit suite point at a
+// fixture so `pnpm test:unit` needs no build — CI runs it before `pnpm build`.
+// The trailing separator is load-bearing: it keeps the containment check below
+// from accepting a sibling whose name shares the prefix (out-leaked.txt).
+const ROOT = normalize(
+  process.env.EXPORT_ROOT
+    ? `${resolve(process.env.EXPORT_ROOT)}${sep}`
+    : fileURLToPath(new URL("../apps/web/out/", import.meta.url)),
+);
 
 // The mount defaults to the site's own base path so the documented
 // NEXT_PUBLIC_BASE_PATH drives the build and the preview identically.

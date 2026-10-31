@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
-import { readFileSync, readdirSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { connect } from "node:net";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { describe, it } from "node:test";
+import { after, describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 import { BASE_PATH, SITE_URL } from "../../apps/web/lib/site-config.mjs";
 
@@ -75,6 +76,16 @@ describe("test harness", () => {
 });
 
 describe("preview server", () => {
+  // A minimal export in a temp directory, so the suite needs no `pnpm build`.
+  // CI runs `test:unit` before `build`; serving apps/web/out here made every
+  // request a 404 on a clean checkout.
+  const EXPORT = mkdtempSync(join(tmpdir(), "meter-export-"));
+  mkdirSync(join(EXPORT, "dashboard"));
+  writeFileSync(join(EXPORT, "index.html"), "<!doctype html><title>Meter — fixture</title>");
+  writeFileSync(join(EXPORT, "404.html"), "<!doctype html><title>Not found</title>");
+  writeFileSync(join(EXPORT, "dashboard", "index.html"), "<!doctype html><title>Dashboard</title>");
+  after(() => rmSync(EXPORT, { recursive: true, force: true }));
+
   // The assertions below expect the defaults, so pin them rather than
   // inheriting whatever HOST or BASE_PATH the caller's shell exports.
   function spawnPreview(port: number, extraEnv: Record<string, string | undefined> = {}) {
@@ -83,6 +94,7 @@ describe("preview server", () => {
       PORT: String(port),
       HOST: "127.0.0.1",
       BASE_PATH: "/api-meter",
+      EXPORT_ROOT: EXPORT,
       ...extraEnv,
     };
     for (const key of Object.keys(env)) if (env[key] === undefined) delete env[key];
@@ -187,6 +199,11 @@ describe("preview server", () => {
 
       const mounted = await fetch(`http://127.0.0.1:${port}/api-meter/`);
       assert.equal(mounted.status, 200);
+      assert.match(
+        await mounted.text(),
+        /Meter — fixture/,
+        "the preview served the build, not the fixture root",
+      );
     } finally {
       child.kill();
     }

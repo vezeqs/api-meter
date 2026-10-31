@@ -18,7 +18,7 @@
     "preview": "node tools/serve-export.mjs",
     "capture": "node tools/capture.mjs",
     "og": "node tools/og.mjs",
-    "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm build && pnpm test",
+    "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test:unit && pnpm build && pnpm test:e2e && pnpm test:tools",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "clean": "turbo run clean"
