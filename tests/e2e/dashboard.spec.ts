@@ -227,3 +227,59 @@ test.describe("api keys", () => {
     await expect(submit).toBeEnabled();
   });
 });
+
+test.describe("billing invariants", () => {
+  test("the quota panel is cycle-scoped and ignores the chart window", async ({ page }) => {
+    await page.goto("/api-meter/dashboard/");
+
+    const meter = page.getByRole("meter", { name: "Requests this cycle" });
+    const before = await meter.getAttribute("aria-valuetext");
+    expect(before).toBeTruthy();
+
+    for (const range of ["7 days", "90 days"]) {
+      await page.getByRole("button", { name: range }).click();
+      expect(await meter.getAttribute("aria-valuetext"), `quota moved at ${range}`).toBe(before);
+    }
+  });
+
+  test("the over-limit meter reports a valid ARIA range", async ({ page }) => {
+    await page.goto("/api-meter/dashboard/");
+
+    const meter = page.getByRole("meter", { name: "Requests this cycle" });
+    const now = Number(await meter.getAttribute("aria-valuenow"));
+    const max = Number(await meter.getAttribute("aria-valuemax"));
+
+    expect(now).toBeLessThanOrEqual(max);
+    await expect(meter).toHaveAttribute("aria-valuetext", /over limit/);
+  });
+
+  test("cycle spend bills overage only, not the included volume", async ({ page }) => {
+    await page.goto("/api-meter/dashboard/");
+
+    const requests = parseCompact(
+      await page.locator('[data-stat="Requests"] [data-value]').innerText(),
+    );
+    const spend = Number(
+      (await page.locator('[data-stat="Cycle spend"] [data-value]').innerText()).replace(
+        /[^0-9.]/g,
+        "",
+      ),
+    );
+
+    const wholeVolumeAtOverageRate = (requests / 1e6) * 12;
+
+    expect(spend).toBeGreaterThan(0);
+    expect(spend).toBeLessThan(wholeVolumeAtOverageRate * 0.9);
+  });
+
+  test("a revoked key cannot be revealed or copied", async ({ page }) => {
+    await page.goto("/api-meter/dashboard/keys/");
+
+    const row = page.getByRole("row").filter({ hasText: "Legacy importer" });
+
+    await expect(
+      row.getByRole("button", { name: /Reveal key for Legacy importer/ }),
+    ).toBeDisabled();
+    await expect(row.getByRole("button", { name: /Copy key for Legacy importer/ })).toBeDisabled();
+  });
+});

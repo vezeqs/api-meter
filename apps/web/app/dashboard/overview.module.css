@@ -88,6 +88,20 @@
   border: 1px solid var(--rule);
 }
 
+.panelHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--rule);
+}
+
+.panelMeta {
+  color: var(--ink-3);
+  font-size: var(--fs-label);
+}
+
 .meters {
   display: grid;
   gap: var(--sp-4);

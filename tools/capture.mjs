@@ -78,6 +78,16 @@ async function main() {
     await mobile.screenshot({ path: join(DOCS, "dashboard-mobile.png") });
     await mobile.close();
 
+    const dark = await browser.newPage({
+      viewport: { width: 1440, height: 900 },
+      deviceScaleFactor: 2,
+      colorScheme: "dark",
+    });
+
+    await dark.goto(`${BASE}/dashboard/`, { waitUntil: "networkidle" });
+    await dark.screenshot({ path: join(DOCS, "dashboard-dark.png") });
+    await dark.close();
+
     // ---- animated frames ----
     const stage = await browser.newPage({
       viewport: { width: 1180, height: 760 },

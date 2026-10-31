@@ -61,7 +61,6 @@ export interface DailyUsage {
   date: string;
   requests: number;
   errors: number;
-  costUsd: number;
 }
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -97,22 +96,41 @@ export interface Quota {
   label: string;
   used: number;
   limit: number;
-  unit: "requests" | "storage" | "seats";
+  unit: QuotaUnit;
+}
+
+export type QuotaUnit = "requests" | "storage" | "webhooks";
+
+/**
+ * Billing is scoped to the cycle, never to the window the chart is showing.
+ * Mixing the two lets a seven-day view report a different percentage of the
+ * monthly allowance than a ninety-day view of the same account.
+ */
+export interface BillingCycle {
+  planId: PlanId;
+  startDate: string;
+  endDate: string;
+  days: number;
+  requests: number;
+  includedRequests: number;
+  /** Requests above the allowance. Zero when inside the plan. */
+  overageRequests: number;
+  /** Overage only. The plan fee is not included. */
+  overageUsd: number;
+  previousOverageUsd: number;
+  quotas: Quota[];
 }
 
 export interface UsageSummary {
   range: TimeRange;
   requests: number;
   errors: number;
-  costUsd: number;
   daily: DailyUsage[];
   endpoints: EndpointStat[];
-  quotas: Quota[];
   /** Change against the previous period of equal length, as a ratio. */
   deltas: {
     requests: number;
     errorRate: number;
-    costUsd: number;
   };
 }
 

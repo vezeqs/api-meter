@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ApiKey } from "@production/shared";
 import { API_KEYS, REFERENCE_DATE } from "@/lib/data";
 import { formatDate } from "@/lib/format";
@@ -26,6 +26,14 @@ export default function KeysPage() {
   const [pendingRevoke, setPendingRevoke] = useState<string | null>(null);
   const [newKeyName, setNewKeyName] = useState("");
   const [createdId, setCreatedId] = useState<string | null>(null);
+  const copyTimer = useRef<number | null>(null);
+
+  useEffect(
+    () => () => {
+      if (copyTimer.current !== null) window.clearTimeout(copyTimer.current);
+    },
+    [],
+  );
 
   function toggleReveal(id: string) {
     setRevealed((current) => {
@@ -40,12 +48,17 @@ export default function KeysPage() {
   }
 
   async function copyKey(key: ApiKey) {
+    if (key.status === "revoked") return;
+
     try {
       await navigator.clipboard.writeText(key.secret);
       setCopiedId(key.id);
       setCopyFailedId(null);
-      window.setTimeout(() => {
+
+      if (copyTimer.current !== null) window.clearTimeout(copyTimer.current);
+      copyTimer.current = window.setTimeout(() => {
         setCopiedId((current) => (current === key.id ? null : current));
+        copyTimer.current = null;
       }, 1800);
     } catch {
       setCopiedId(null);
@@ -55,10 +68,14 @@ export default function KeysPage() {
 
   function revoke(id: string) {
     setKeys((current) =>
-      current.map((key) =>
-        key.id === id ? { ...key, status: "revoked" as const, lastUsedAt: key.lastUsedAt } : key,
-      ),
+      current.map((key) => (key.id === id ? { ...key, status: "revoked" as const } : key)),
     );
+    // A revoked secret should not stay on screen.
+    setRevealed((current) => {
+      const next = new Set(current);
+      next.delete(id);
+      return next;
+    });
     setPendingRevoke(null);
   }
 
@@ -166,6 +183,7 @@ export default function KeysPage() {
                         type="button"
                         className={styles.ghost}
                         onClick={() => toggleReveal(key.id)}
+                        disabled={isRevoked}
                         aria-label={`${isRevealed ? "Hide" : "Reveal"} key for ${key.name}`}
                       >
                         {isRevealed ? "Hide" : "Reveal"}
@@ -174,6 +192,7 @@ export default function KeysPage() {
                         type="button"
                         className={styles.ghost}
                         onClick={() => void copyKey(key)}
+                        disabled={isRevoked}
                         aria-label={`Copy key for ${key.name}`}
                       >
                         {copiedId === key.id ? "Copied" : "Copy"}

@@ -46,8 +46,11 @@ export function UsageChart({ daily }: UsageChartProps) {
     return null;
   }
 
-  const active = activeIndex === null ? null : (model.points[activeIndex] ?? null);
-  const activePercent = count <= 1 ? 0 : ((activeIndex ?? 0) / (count - 1)) * 100;
+  // The window can shrink under a selection (90 days -> 7 days). Clamp the
+  // stored index so the tooltip and crosshair do not silently disappear.
+  const effectiveIndex = activeIndex === null ? null : Math.min(activeIndex, count - 1);
+  const active = effectiveIndex === null ? null : (model.points[effectiveIndex] ?? null);
+  const activePercent = count <= 1 ? 0 : ((effectiveIndex ?? 0) / (count - 1)) * 100;
   const tooltipLeft = Math.min(92, Math.max(8, activePercent));
 
   function clampIndex(index: number): number {
@@ -62,7 +65,7 @@ export function UsageChart({ daily }: UsageChartProps) {
   }
 
   function handleKey(event: KeyboardEvent<HTMLDivElement>) {
-    const current = activeIndex ?? count - 1;
+    const current = effectiveIndex ?? count - 1;
 
     switch (event.key) {
       case "ArrowRight":

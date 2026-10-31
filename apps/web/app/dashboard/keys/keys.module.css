@@ -170,6 +170,16 @@ tr[data-revoked="true"] .meta {
   color: var(--ink);
 }
 
+.ghost:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.ghost:disabled:hover {
+  border-bottom-color: transparent;
+  color: var(--ink-3);
+}
+
 .copyError {
   margin-top: var(--sp-1);
   color: var(--accent);

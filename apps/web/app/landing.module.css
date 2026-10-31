@@ -156,9 +156,9 @@
 }
 
 .specimenFoot {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: end;
   gap: var(--sp-4);
   padding-top: var(--sp-3);
   border-top: 1px solid var(--rule);
@@ -171,8 +171,8 @@
 
 .specimenSpark {
   width: 100%;
-  max-width: 10rem;
   height: 2.25rem;
+  align-self: center;
   color: var(--accent);
 }
 

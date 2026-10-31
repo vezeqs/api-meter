@@ -2,10 +2,11 @@ import Link from "next/link";
 import { APP_NAME, APP_TAGLINE, PLANS } from "@production/shared";
 import { QuotaMeter } from "@/components/quota-meter";
 import { Sparkline } from "@/components/sparkline";
-import { getUsageSummary } from "@/lib/data";
-import { formatCompact, formatQuotaLabels, formatUsd } from "@/lib/format";
+import { getBillingCycle, getUsageSummary } from "@/lib/data";
+import { formatCompact, formatDayRange, formatQuotaLabels, formatUsd } from "@/lib/format";
 import styles from "./landing.module.css";
 
+const billing = getBillingCycle();
 const summary = getUsageSummary("30d");
 
 const TRACKED = [
@@ -65,11 +66,13 @@ export default function LandingPage() {
           <div className={styles.specimen} aria-label="Sample of the current billing cycle">
             <div className={styles.specimenHead}>
               <span className="label">Current cycle</span>
-              <span className={`num ${styles.specimenMeta}`}>30 days</span>
+              <span className={`num ${styles.specimenMeta}`}>
+                {formatDayRange(billing.startDate, billing.endDate)}
+              </span>
             </div>
 
             <div className={styles.meters}>
-              {summary.quotas.map((quota) => {
+              {billing.quotas.map((quota) => {
                 const labels = formatQuotaLabels(quota);
                 return (
                   <QuotaMeter
@@ -88,8 +91,12 @@ export default function LandingPage() {
               <div>
                 <span className="label">Requests / day</span>
                 <p className={`num ${styles.specimenValue}`}>
-                  {formatCompact(summary.requests / summary.daily.length)}
+                  {formatCompact(billing.requests / billing.days)}
                 </p>
+              </div>
+              <div>
+                <span className="label">Overage</span>
+                <p className={`num ${styles.specimenValue}`}>{formatUsd(billing.overageUsd)}</p>
               </div>
               <Sparkline
                 values={summary.daily.map((entry) => entry.requests)}

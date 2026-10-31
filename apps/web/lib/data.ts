@@ -1,13 +1,16 @@
 import type {
   ApiKey,
+  BillingCycle,
   DailyUsage,
   EndpointStat,
   HttpMethod,
+  Plan,
+  PlanId,
   Quota,
   TimeRange,
   UsageSummary,
 } from "@production/shared";
-import { TIME_RANGE_DAYS } from "@production/shared";
+import { findPlan, TIME_RANGE_DAYS } from "@production/shared";
 
 /**
  * The demo is anchored to a fixed date so the build output, the server render,
@@ -17,7 +20,16 @@ import { TIME_RANGE_DAYS } from "@production/shared";
 export const REFERENCE_DATE = "2026-10-30";
 
 const HISTORY_DAYS = 180;
-const COST_PER_MILLION_USD = 12;
+const CYCLE_DAYS = 30;
+const CURRENT_PLAN_ID: PlanId = "pro";
+
+function resolvePlan(id: PlanId): Plan {
+  const plan = findPlan(id);
+  if (!plan) throw new Error(`unknown plan: ${id}`);
+  return plan;
+}
+
+const PLAN = resolvePlan(CURRENT_PLAN_ID);
 
 /** Small, fast, deterministic PRNG. Same seed, same dashboard, every time. */
 function mulberry32(seed: number): () => number {
@@ -120,7 +132,6 @@ function buildHistory(): DailyUsage[] {
       date,
       requests: dailyRequests,
       errors: Math.round(dailyRequests * rate),
-      costUsd: (dailyRequests / 1_000_000) * COST_PER_MILLION_USD,
     };
   });
 }
@@ -146,12 +157,22 @@ function ratio(current: number, previous: number): number {
   return (current - previous) / previous;
 }
 
+function totalRequests(daily: readonly DailyUsage[]): number {
+  return sum(daily.map((entry) => entry.requests));
+}
+
+/** Overage only. The plan fee is billed separately and is not usage. */
+function overageUsd(requests: number, plan: Plan): number {
+  const over = Math.max(0, requests - plan.includedRequests);
+  return (over / 1_000_000) * plan.overagePerMillionUsd;
+}
+
 function buildEndpoints(daily: readonly DailyUsage[]): EndpointStat[] {
-  const totalRequests = sum(daily.map((entry) => entry.requests));
+  const total = totalRequests(daily);
 
   return ENDPOINT_SEEDS.map((seed, index) => {
     const rand = mulberry32(0xbeef_0000 + index * 7919);
-    const target = Math.round(totalRequests * seed.share);
+    const target = Math.round(total * seed.share);
 
     const raw = buildSeries(rand, daily.length, {
       base: target / Math.max(1, daily.length),
@@ -178,13 +199,13 @@ function buildEndpoints(daily: readonly DailyUsage[]): EndpointStat[] {
   }).sort((a, b) => b.requests - a.requests);
 }
 
-function buildQuotas(totalRequests: number): Quota[] {
+function buildQuotas(cycleRequests: number): Quota[] {
   return [
     {
       id: "requests",
       label: "Requests this cycle",
-      used: totalRequests,
-      limit: 2_000_000,
+      used: cycleRequests,
+      limit: PLAN.includedRequests,
       unit: "requests",
     },
     {
@@ -194,19 +215,45 @@ function buildQuotas(totalRequests: number): Quota[] {
       limit: 25_000_000_000,
       unit: "storage",
     },
-    { id: "seats", label: "Seats", used: 3, limit: 5, unit: "seats" },
+    {
+      id: "webhooks",
+      label: "Webhook deliveries",
+      used: 421_000,
+      limit: 500_000,
+      unit: "webhooks",
+    },
   ];
+}
+
+export function getBillingCycle(): BillingCycle {
+  const daily = HISTORY.slice(HISTORY.length - CYCLE_DAYS);
+  const previous = HISTORY.slice(HISTORY.length - CYCLE_DAYS * 2, HISTORY.length - CYCLE_DAYS);
+
+  const requests = totalRequests(daily);
+  const previousRequests = totalRequests(previous);
+
+  return {
+    planId: PLAN.id,
+    startDate: daily[0]?.date ?? REFERENCE_DATE,
+    endDate: daily[daily.length - 1]?.date ?? REFERENCE_DATE,
+    days: daily.length,
+    requests,
+    includedRequests: PLAN.includedRequests,
+    overageRequests: Math.max(0, requests - PLAN.includedRequests),
+    overageUsd: overageUsd(requests, PLAN),
+    previousOverageUsd: overageUsd(previousRequests, PLAN),
+    quotas: buildQuotas(requests),
+  };
 }
 
 export function getUsageSummary(range: TimeRange): UsageSummary {
   const daily = sliceRange(range);
   const previous = previousRange(range);
 
-  const requests = sum(daily.map((entry) => entry.requests));
+  const requests = totalRequests(daily);
   const errors = sum(daily.map((entry) => entry.errors));
-  const costUsd = sum(daily.map((entry) => entry.costUsd));
 
-  const previousRequests = sum(previous.map((entry) => entry.requests));
+  const previousRequests = totalRequests(previous);
   const previousErrors = sum(previous.map((entry) => entry.errors));
 
   const errorRate = requests > 0 ? errors / requests : 0;
@@ -216,14 +263,11 @@ export function getUsageSummary(range: TimeRange): UsageSummary {
     range,
     requests,
     errors,
-    costUsd,
     daily,
     endpoints: buildEndpoints(daily),
-    quotas: buildQuotas(requests),
     deltas: {
       requests: ratio(requests, previousRequests),
       errorRate: ratio(errorRate, previousErrorRate),
-      costUsd: ratio(costUsd, sum(previous.map((entry) => entry.costUsd))),
     },
   };
 }

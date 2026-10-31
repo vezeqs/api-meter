@@ -23,14 +23,24 @@ export function QuotaMeter({
   const isTight = ratio >= 0.9;
   const isOver = ratio > 1;
 
-  const valueText = `${usedLabel} of ${limitLabel} used, ${Math.round(ratio * 100)} percent`;
+  const percentRounded = Math.round(ratio * 100);
+
+  // aria-valuenow may not exceed aria-valuemax. Reporting the raw figure at
+  // 125% produces an invalid range, so clamp it and let valuetext carry the
+  // overage.
+  const safeMax = limit > 0 ? limit : 1;
+  const safeNow = Math.min(Math.max(used, 0), safeMax);
+
+  const valueText = isOver
+    ? `${usedLabel} of ${limitLabel}, ${percentRounded} percent, over limit`
+    : `${usedLabel} of ${limitLabel}, ${percentRounded} percent`;
 
   return (
     <div className={dense ? `${styles.wrap} ${styles.dense}` : styles.wrap}>
       <div className={styles.head}>
         <span className={styles.name}>{label}</span>
         <span className={`${styles.pct} num`} data-tight={isTight ? "true" : undefined}>
-          {Math.round(ratio * 100)}%
+          {percentRounded}%
         </span>
       </div>
 
@@ -39,8 +49,8 @@ export function QuotaMeter({
         role="meter"
         aria-label={label}
         aria-valuemin={0}
-        aria-valuemax={limit}
-        aria-valuenow={used}
+        aria-valuemax={safeMax}
+        aria-valuenow={safeNow}
         aria-valuetext={valueText}
       >
         <span className={styles.ticks} aria-hidden="true" />

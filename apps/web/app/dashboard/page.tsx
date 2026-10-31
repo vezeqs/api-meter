@@ -7,8 +7,15 @@ import { QuotaMeter } from "@/components/quota-meter";
 import { RangeSelector } from "@/components/range-selector";
 import { Sparkline } from "@/components/sparkline";
 import { UsageChart } from "@/components/usage-chart";
-import { getUsageSummary } from "@/lib/data";
-import { formatCompact, formatDelta, formatQuotaLabels, formatRate, formatUsd } from "@/lib/format";
+import { getBillingCycle, getUsageSummary } from "@/lib/data";
+import {
+  formatCompact,
+  formatDayRange,
+  formatDelta,
+  formatQuotaLabels,
+  formatRate,
+  formatUsd,
+} from "@/lib/format";
 import styles from "./overview.module.css";
 
 const RANGE_LABELS: Record<TimeRange, string> = {
@@ -20,14 +27,12 @@ const RANGE_LABELS: Record<TimeRange, string> = {
 interface StatProps {
   label: string;
   value: string;
-  delta: number;
+  note: string;
+  noteTone?: "neutral" | "bad";
   series?: readonly number[];
-  tone?: "neutral" | "bad";
 }
 
-function Stat({ label, value, delta, series, tone = "neutral" }: StatProps) {
-  const isBad = tone === "bad" && delta > 0;
-
+function Stat({ label, value, note, noteTone = "neutral", series }: StatProps) {
   return (
     <div className={styles.stat} data-stat={label}>
       <span className="label">{label}</span>
@@ -35,8 +40,8 @@ function Stat({ label, value, delta, series, tone = "neutral" }: StatProps) {
         {value}
       </p>
       <div className={styles.statFoot}>
-        <span className={`num ${styles.delta}`} data-bad={isBad ? "true" : undefined}>
-          {formatDelta(delta)} vs previous
+        <span className={`num ${styles.delta}`} data-bad={noteTone === "bad" ? "true" : undefined}>
+          {note}
         </span>
         {series ? (
           <Sparkline values={series} width={80} height={18} className={styles.statSpark} />
@@ -48,16 +53,29 @@ function Stat({ label, value, delta, series, tone = "neutral" }: StatProps) {
 
 export default function OverviewPage() {
   const [range, setRange] = useState<TimeRange>("30d");
+
+  // Two different questions. The range controls the analysis; the cycle
+  // controls the bill. Mixing them lets the same account read 30% and 358%
+  // of its allowance depending on a dropdown.
   const summary = useMemo(() => getUsageSummary(range), [range]);
+  const billing = useMemo(() => getBillingCycle(), []);
 
   const errorRate = summary.requests > 0 ? summary.errors / summary.requests : 0;
+  const cycleLabel = formatDayRange(billing.startDate, billing.endDate);
+
+  const overageNote =
+    billing.overageRequests > 0
+      ? `${formatCompact(billing.overageRequests)} over allowance`
+      : "within allowance";
 
   return (
     <div className={styles.page}>
       <header className={styles.header}>
         <div>
           <h1 className={styles.title}>Overview</h1>
-          <p className={styles.sub}>Billing cycle · {RANGE_LABELS[range]}</p>
+          <p className={styles.sub}>
+            Billing cycle {cycleLabel} · chart shows {RANGE_LABELS[range]}
+          </p>
         </div>
         <RangeSelector value={range} onChange={setRange} />
       </header>
@@ -66,19 +84,20 @@ export default function OverviewPage() {
         <Stat
           label="Requests"
           value={formatCompact(summary.requests)}
-          delta={summary.deltas.requests}
+          note={`${formatDelta(summary.deltas.requests)} vs previous`}
           series={summary.daily.map((entry) => entry.requests)}
         />
         <Stat
           label="Error rate"
           value={formatRate(errorRate)}
-          delta={summary.deltas.errorRate}
-          tone="bad"
+          note={`${formatDelta(summary.deltas.errorRate)} vs previous`}
+          noteTone={summary.deltas.errorRate > 0 ? "bad" : "neutral"}
         />
         <Stat
-          label="Usage spend"
-          value={formatUsd(summary.costUsd)}
-          delta={summary.deltas.costUsd}
+          label="Cycle spend"
+          value={formatUsd(billing.overageUsd)}
+          note={overageNote}
+          noteTone={billing.overageRequests > 0 ? "bad" : "neutral"}
         />
       </section>
 
@@ -88,11 +107,14 @@ export default function OverviewPage() {
         </section>
 
         <section className={styles.panel} aria-labelledby="quota-heading">
-          <h2 id="quota-heading" className="label">
-            Quota
-          </h2>
+          <div className={styles.panelHead}>
+            <h2 id="quota-heading" className="label">
+              Quota
+            </h2>
+            <span className={`num ${styles.panelMeta}`}>{cycleLabel}</span>
+          </div>
           <div className={styles.meters}>
-            {summary.quotas.map((quota) => {
+            {billing.quotas.map((quota) => {
               const labels = formatQuotaLabels(quota);
               return (
                 <QuotaMeter

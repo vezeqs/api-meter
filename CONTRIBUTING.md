@@ -36,14 +36,15 @@ provision more than the plan pays for.
 ## Before a pull request
 
 ```sh
-pnpm format:check
-pnpm lint
-pnpm typecheck
-pnpm build
+pnpm verify
 ```
 
-CI runs the same checks plus an API smoke test. A pull request that fails them
-is not ready for review.
+That runs formatting, lint, typecheck, the build, the unit suite, and the
+Playwright audit. CI runs the same pipeline plus an API smoke test. A pull
+request that fails it is not ready for review.
+
+If you changed anything visual, also run `pnpm capture` and commit the
+refreshed images in `docs/`.
 
 ## Adding a dependency
 
