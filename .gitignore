@@ -10,9 +10,6 @@ build/
 .turbo/
 *.tsbuildinfo
 
-# Next.js generated types
-next-env.d.ts
-
 # Environment files. Only the example is tracked.
 .env
 .env.*
@@ -38,6 +35,9 @@ coverage/
 playwright-report/
 test-results/
 blob-report/
+
+# Generated capture frames
+docs/.frames/
 
 # Operating system
 .DS_Store

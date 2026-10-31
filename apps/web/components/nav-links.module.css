@@ -1,0 +1,46 @@
+.list {
+  display: grid;
+  gap: 1px;
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 0.5rem 0;
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+}
+
+.link:hover {
+  color: var(--ink);
+}
+
+.tick {
+  display: inline-block;
+  width: 0.75rem;
+  height: 1px;
+  background: var(--rule-strong);
+  transition: background-color 120ms ease-out;
+}
+
+.link[data-active="true"] {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.link[data-active="true"] .tick {
+  height: 2px;
+  background: var(--accent);
+}
+
+@media (max-width: 760px) {
+  .list {
+    display: flex;
+    gap: var(--sp-5);
+  }
+
+  .link {
+    padding: 0;
+  }
+}

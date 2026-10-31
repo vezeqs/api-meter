@@ -5,27 +5,34 @@ this before changing anything.
 
 ## What this repository is
 
-A SaaS application built as a pnpm workspace with Turborepo. Next.js serves the
-product; a Fastify service handles work that does not belong in a request
-handler; `packages/shared` holds the types and constants both depend on.
+Meter is a usage and billing front end for an API product: request volume,
+quota, error rate, and spend. It is a pnpm workspace with Turborepo. Next.js
+serves the product and is exported as static files for GitHub Pages; a Fastify
+service handles work that does not belong in a request handler;
+`packages/shared` holds the types both depend on.
 
-The scaffold is complete and verified. The product is not built yet, so most
-directories are intentionally thin. Do not invent architecture that has not
-been asked for.
+The dashboard runs on generated data with a fixed seed. It is a demonstration
+build, not a production service. Do not present it as one, and do not add copy
+that implies real customer data.
 
 ## Layout
 
-| Path                           | What lives there                                               |
-| ------------------------------ | -------------------------------------------------------------- |
-| `apps/web`                     | Next.js App Router. Pages, layouts, route handlers, UI.        |
-| `apps/api`                     | Fastify service. ESM, built with `tsc` to `dist/`.             |
-| `packages/shared`              | Types and constants imported by both apps.                     |
-| `packages/shared/src/index.ts` | The package's public surface. Everything exported here is API. |
+| Path                           | What lives there                                                 |
+| ------------------------------ | ---------------------------------------------------------------- |
+| `apps/web/app`                 | Routes. `page.tsx` is the landing page, `dashboard/` is the app. |
+| `apps/web/components`          | Shared UI. Each component owns a CSS module beside it.           |
+| `apps/web/lib`                 | Data generation, formatting, and site constants.                 |
+| `apps/web/public`              | Static assets, including `og.png` and `.nojekyll`.               |
+| `apps/api`                     | Fastify service. ESM, built with `tsc` to `dist/`.               |
+| `packages/shared/src/index.ts` | Types and constants. Everything exported is API.                 |
+| `tests/e2e`                    | Playwright audit and behaviour suites.                           |
+| `tools`                        | Static server, screenshot capture, Open Graph generation.        |
+| `docs`                         | Screenshots and the demo GIF used by the README.                 |
 
 `packages/shared` is prebuilt, not transpiled by Next.js. It must be built
-before `apps/web` and `apps/api` can resolve it. Turborepo handles the order
-through `dependsOn: ["^build"]`, so always build with `pnpm build` rather than
-building a single app from a clean tree.
+before the apps can resolve it. Turborepo handles the order through
+`dependsOn: ["^build"]`, so build with `pnpm build` rather than building one app
+from a clean tree.
 
 ## House rules
 
@@ -33,83 +40,87 @@ building a single app from a clean tree.
   comment explaining why the type system cannot express the case.
 - Type-only imports use `import type`. The `consistent-type-imports` rule
   enforces this.
-- `verbatimModuleSyntax` is on. Every relative import in `apps/api` and
-  `packages/shared` needs its `.js` extension, even though the source is
-  `.ts`. `apps/web` uses bundler resolution and does not.
-- ESM only. `apps/api` and `packages/shared` are `"type": "module"`. Do not add
-  CommonJS files.
-- Server secrets never reach the client. Anything read by a client component
-  must be `NEXT_PUBLIC_` and is public by definition.
-- Every new environment variable gets a placeholder in `.env.example` in the
-  same commit.
-- Pin dependency versions exactly. The lockfile is committed; do not delete or
-  regenerate it casually.
+- `verbatimModuleSyntax` is on. Relative imports in `apps/api` and
+  `packages/shared` need their `.js` extension. `apps/web` uses bundler
+  resolution and does not.
+- ESM only. `apps/api` and `packages/shared` are `"type": "module"`.
+- No UI framework, CSS framework, or charting library. The visual language is
+  hand-written CSS Modules and inline SVG. Keep it that way; the restraint is
+  the design.
+- Use the design tokens in `apps/web/app/globals.css`. Do not introduce a new
+  colour, radius, or font without replacing an existing one.
+- Every colour must meet WCAG AA against the surface it sits on, in both
+  themes. `--ink-3` is the lightest text colour allowed, and only at 11px or
+  larger with a monospace face.
+- Server secrets never reach the client. Anything prefixed `NEXT_PUBLIC_` is
+  public.
+- Every new environment variable gets a placeholder in `.env.example`.
+- Pin dependency versions exactly. The lockfile is committed.
 - Prefer the standard library and existing dependencies over a new package.
-  Justify every addition in the pull request.
+  Justify every addition.
 
-## Security
+## Deployment constraints
 
-- Never commit `.env`, credentials, tokens, private keys, or customer data.
-  `.gitignore` covers the common cases; do not weaken it.
-- Validate and parse untrusted input at the boundary. Do not pass request
-  bodies straight into a database, a template, or a shell.
-- Do not log request bodies, tokens, or personal data. Fastify's logger is on;
-  keep it that way.
-- Authorize on the server. Hiding a button is not access control.
-- Do not add analytics, trackers, or third-party scripts that collect user
-  data without being asked.
+The site is a static export served from a subpath. This shapes the code:
 
-## Verification
+- `output: "export"` in `next.config.ts`. No server components with request
+  data, no route handlers, no middleware, no dynamic routes without
+  `generateStaticParams`.
+- `BASE_PATH` is `/meter` by default. Every internal link goes through
+  `next/link` or `lib/site.ts` so the prefix is applied once.
+- `SITE_URL` is the origin only. `BASE_PATH` is the subpath. Concatenating them
+  is `absoluteUrl`'s job; do not do it by hand.
+- Anything read from `window`, `navigator`, or `crypto` belongs in a client
+  component and must not run during the prerender.
 
-Run all four before reporting work as done:
-
-```sh
-pnpm format:check
-pnpm lint
-pnpm typecheck
-pnpm build
-```
-
-To exercise the API locally:
+## Testing
 
 ```sh
-pnpm build
-node apps/api/dist/index.js &
-curl -sf http://127.0.0.1:4000/health
-kill %1
+pnpm build && pnpm test
 ```
 
-To exercise the web app:
+The suite runs against `apps/web/out` served from `/meter`, which is why a
+build is required first. It checks console health, horizontal overflow at four
+widths, document structure, base-path correctness, sitemap and robots content,
+axe-core under WCAG 2.1 AA in both themes, and the behaviour of every
+interactive control.
 
-```sh
-pnpm build
-pnpm --filter @production/web start
-```
-
-The expected response from `/health` is
-`{"status":"ok","service":"api","version":"0.1.0"}`.
+If you change the data layer, keep the reconciliation test passing: the
+per-endpoint totals must sum to the headline figure within two percent.
 
 ## Common mistakes
 
+- Hardcoding `/meter` in a link or asset path instead of using `next/link` or
+  `absoluteUrl`.
+- Putting `position: absolute` content inside a horizontally scrolling
+  container without making that container a containing block. The
+  visually-hidden labels will anchor to the page and extend its scroll width.
+- Changing the seed or the shape of `lib/data.ts` and breaking the totals.
 - Editing `packages/shared/src/index.ts` and forgetting that consumers need a
   rebuild before they see the change.
 - Adding a relative import in `apps/api` without the `.js` extension.
-- Putting a server-only value behind `NEXT_PUBLIC_` and shipping it to the
-  browser.
-- Adding a dependency to the root `package.json` when it belongs to one app.
-- Committing `.env`, `.next`, `dist`, or `node_modules`.
-- Weakening a check or an ESLint rule to make a failure go away. Fix the
-  cause.
+- Committing `.env`, `.next`, `out`, `dist`, `node_modules`, or capture frames.
+- Weakening a check or an ESLint rule to make a failure go away.
+
+## Regenerating assets
+
+```sh
+pnpm build
+pnpm capture   # docs/landing.png, dashboard.png, keys.png, dashboard-mobile.png, demo.gif
+pnpm og        # apps/web/public/og.png
+```
+
+Re-run both after any visual change. A README screenshot that no longer matches
+the product is worse than no screenshot.
 
 ## Definition of done
 
-- [ ] `pnpm format:check` passes.
-- [ ] `pnpm lint` passes with no new warnings.
-- [ ] `pnpm typecheck` passes in every package.
-- [ ] `pnpm build` passes.
-- [ ] New environment variables are documented in `.env.example`.
+- [ ] `pnpm verify` passes.
+- [ ] New UI meets WCAG AA in light and dark themes.
+- [ ] No horizontal overflow at 1440, 768, 390, or 320 pixels.
+- [ ] Screenshots and the GIF regenerated if anything visual changed.
+- [ ] New environment variables documented in `.env.example`.
 - [ ] No secrets, tokens, or generated output in the diff.
-- [ ] The pull request explains why the change is needed.
 
 ## Working in this repository
 

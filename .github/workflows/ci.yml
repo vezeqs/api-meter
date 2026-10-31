@@ -34,6 +34,10 @@ jobs:
         run: pnpm typecheck
       - name: Build
         run: pnpm build
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+      - name: End-to-end tests
+        run: pnpm test
       - name: Smoke test the API
         run: |
           node apps/api/dist/index.js &

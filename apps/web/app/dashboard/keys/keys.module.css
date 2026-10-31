@@ -1,0 +1,243 @@
+.page {
+  display: grid;
+  gap: var(--sp-5);
+  max-width: 78rem;
+}
+
+.header {
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--rule);
+}
+
+.title {
+  font-size: var(--fs-xl);
+}
+
+.sub {
+  margin-top: var(--sp-1);
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+}
+
+/* ---------- create ---------- */
+
+.create {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.createField {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
+.input {
+  width: 100%;
+  padding: 0.5rem var(--sp-3);
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  font-size: var(--fs-sm);
+}
+
+.input::placeholder {
+  color: var(--ink-3);
+}
+
+.submit {
+  padding: 0.5rem var(--sp-4);
+  background: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+  color: var(--paper);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+}
+
+.submit:not(:disabled):hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+/* ---------- table ---------- */
+
+/*
+ * position: relative keeps absolutely positioned visually-hidden labels
+ * inside the scroll container instead of anchoring them to the page.
+ */
+.scroller {
+  position: relative;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.table {
+  min-width: 52rem;
+}
+
+.table thead th {
+  padding: 0 var(--sp-4) var(--sp-2) 0;
+  border-bottom: 1px solid var(--rule-strong);
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.table tbody th,
+.table tbody td {
+  padding: var(--sp-3) var(--sp-4) var(--sp-3) 0;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+
+.table tbody tr:last-child th,
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+tr[data-revoked="true"] .name,
+tr[data-revoked="true"] .secret,
+tr[data-revoked="true"] .meta {
+  color: var(--ink-3);
+}
+
+.nameCell {
+  font-weight: 400;
+  text-align: left;
+}
+
+.name {
+  display: block;
+  font-size: var(--fs-sm);
+}
+
+.scopes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  margin-top: var(--sp-1);
+}
+
+.scope {
+  padding: 0 0.25rem;
+  border: 1px solid var(--rule);
+  border-radius: 1px;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+}
+
+.keyCell {
+  min-width: 20rem;
+}
+
+.secret {
+  display: block;
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+}
+
+.keyActions {
+  display: flex;
+  gap: var(--sp-3);
+  margin-top: var(--sp-1);
+}
+
+.ghost {
+  border-bottom: 1px solid transparent;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ghost:hover {
+  border-bottom-color: var(--rule-strong);
+  color: var(--ink);
+}
+
+.copyError {
+  margin-top: var(--sp-1);
+  color: var(--accent);
+  font-size: var(--fs-label);
+}
+
+.meta {
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+}
+
+.status {
+  display: inline-block;
+  padding: 0.125rem 0.375rem;
+  border: 1px solid var(--rule);
+  border-radius: 1px;
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.status[data-status="active"] {
+  border-color: currentColor;
+  color: var(--ok);
+}
+
+.status[data-status="revoked"] {
+  color: var(--ink-3);
+}
+
+.actionCell {
+  white-space: nowrap;
+}
+
+.confirm {
+  display: inline-flex;
+  gap: var(--sp-2);
+}
+
+.danger {
+  padding: 0.125rem 0.375rem;
+  background: var(--accent);
+  border-radius: 1px;
+  color: var(--accent-ink);
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.muted {
+  color: var(--ink-3);
+}
+
+/* ---------- note ---------- */
+
+.note {
+  display: grid;
+  gap: var(--sp-2);
+  max-width: 60ch;
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--rule);
+}
+
+.note p {
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+}

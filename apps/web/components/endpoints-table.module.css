@@ -1,0 +1,183 @@
+.wrap {
+  display: grid;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+
+.headText {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+}
+
+.count {
+  color: var(--ink-3);
+  font-size: var(--fs-label);
+}
+
+.filter {
+  flex: 0 1 13rem;
+  min-width: 0;
+}
+
+.input {
+  width: 100%;
+  padding: 0.375rem var(--sp-3);
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  font-size: var(--fs-sm);
+}
+
+.input::placeholder {
+  color: var(--ink-3);
+}
+
+/*
+ * position: relative is load-bearing. The header cells contain absolutely
+ * positioned visually-hidden labels; without a containing block here they
+ * anchor to the page and extend its scroll width past the wide table.
+ */
+.scroller {
+  position: relative;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.table {
+  min-width: 34rem;
+}
+
+.table thead th {
+  padding: 0 var(--sp-3) var(--sp-2) 0;
+  border-bottom: 1px solid var(--rule-strong);
+  text-align: left;
+}
+
+.table thead th:last-child {
+  padding-right: 0;
+}
+
+.sort {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sort:hover {
+  color: var(--ink);
+}
+
+.caret {
+  width: 0;
+  height: 0;
+  border-right: 3px solid transparent;
+  border-left: 3px solid transparent;
+  border-top: 4px solid currentColor;
+  opacity: 0;
+}
+
+th[aria-sort="ascending"] .sort,
+th[aria-sort="descending"] .sort {
+  color: var(--ink);
+}
+
+th[aria-sort="ascending"] .caret {
+  opacity: 1;
+  transform: rotate(180deg);
+}
+
+th[aria-sort="descending"] .caret {
+  opacity: 1;
+}
+
+.numericHead {
+  text-align: right;
+}
+
+.numericHead .sort {
+  justify-content: flex-end;
+}
+
+.row {
+  border-bottom: 1px solid var(--rule);
+}
+
+.row:hover {
+  background: var(--surface);
+}
+
+.table tbody th,
+.table tbody td {
+  padding: var(--sp-2) var(--sp-3) var(--sp-2) 0;
+}
+
+.table tbody tr:last-child th,
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.endpointCell {
+  font-weight: 400;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.method {
+  display: inline-block;
+  width: 3.75rem;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  letter-spacing: 0.06em;
+}
+
+.path {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+}
+
+.numeric {
+  font-size: var(--fs-sm);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.numeric[data-warn="true"] {
+  color: var(--accent);
+}
+
+.trendHead {
+  width: 7rem;
+}
+
+.trendCell {
+  padding-left: var(--sp-4);
+}
+
+.spark {
+  width: 6rem;
+  height: 1.25rem;
+  color: var(--ink-3);
+}
+
+.empty {
+  padding: var(--sp-5) 0;
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+  text-align: left;
+}

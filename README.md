@@ -1,69 +1,155 @@
-# Production
+# Meter
 
-A SaaS application built with Next.js, TypeScript, and a pnpm workspace.
+Usage and billing for API products. Request volume, quota consumption, error
+rate, and spend, in one place, so a metered bill never arrives as a surprise.
 
-This repository is a scaffold. The structure, tooling, and checks are in place;
-the product itself has not been built yet.
+**[Live preview →](https://vezeqs.github.io/meter/)**
 
-## Layout
+![The Meter dashboard: request volume, quota meters, and an endpoint table](docs/demo.gif)
 
-```
-apps/
-  web/        Next.js app (App Router, React 19)
-  api/        Fastify service, ESM, compiled with tsc
-packages/
-  shared/     Types and constants shared by both apps
-```
+## What this is
 
-`packages/shared` builds to `dist/` and is consumed by both apps through the
-pnpm workspace, so a change to a shared type is caught by `pnpm typecheck` in
-every package that imports it.
+A working front end for a metered API product. It reads a request log and turns
+it into the four things a customer actually asks about: how much have I used,
+how much is left, is anything failing, and what will this cost.
 
-## Requirements
+The interface is built as a precision instrument rather than a dashboard of
+cards: hairline rules, tabular figures, one accent colour, and a quota bar that
+turns at ninety percent instead of after the invoice.
 
-- Node 24 (see `.nvmrc`)
-- pnpm 10.34.8 (pinned in `packageManager`)
+This repository is a demonstration build. Every figure is generated from a
+fixed seed in [`apps/web/lib/data.ts`](apps/web/lib/data.ts); nothing is
+collected from a real service.
 
-If pnpm is not on your `PATH`, run `corepack enable pnpm`, or use
-`corepack pnpm` in place of `pnpm`.
+## Screens
 
-## Setup
+| Overview                        | API keys                   |
+| ------------------------------- | -------------------------- |
+| ![Overview](docs/dashboard.png) | ![API keys](docs/keys.png) |
+
+<img src="docs/dashboard-mobile.png" alt="The dashboard at 390 pixels wide" width="320" />
+
+## What it does
+
+**Request volume.** A daily series per endpoint, with a chart that responds to
+the keyboard as well as the pointer. Arrow keys walk the series and announce
+each day to assistive technology.
+
+**Quota.** Used against the cycle limit, with tick marks every ten percent. The
+bar switches to the accent colour at ninety percent and reports an overage when
+the limit is passed.
+
+**Endpoints.** Sortable by any numeric column, filterable by path, with a
+sparkline beside each row. The per-endpoint totals reconcile with the headline
+figure — there is a test that fails if they drift apart.
+
+**API keys.** Reveal, copy, revoke with confirmation, and create. A new secret
+is written in full once, which is what a real system does.
+
+## Stack
+
+|           |                                                |
+| --------- | ---------------------------------------------- |
+| Framework | Next.js 16, App Router, static export          |
+| Language  | TypeScript 6, strict                           |
+| UI        | Hand-written CSS Modules, no component library |
+| Charts    | Inline SVG, no charting dependency             |
+| Tests     | Playwright with axe-core                       |
+| Workspace | pnpm + Turborepo                               |
+
+There is no UI framework, no CSS framework, and no charting library. The
+dashboard is roughly 1,400 lines of TypeScript and CSS.
+
+## Getting started
+
+Requires Node 24 (see `.nvmrc`) and pnpm 10.34.8 (pinned in `packageManager`).
 
 ```sh
 pnpm install
-cp .env.example .env
+pnpm build
+pnpm preview
 ```
 
-Fill in `.env` with real values. Never commit it; only `.env.example` is
-tracked.
+Then open <http://127.0.0.1:4321/meter/>. `pnpm preview` serves the exported
+site from a subpath, the same way GitHub Pages will.
+
+For development with reloading:
+
+```sh
+pnpm dev
+```
+
+The app is served at <http://localhost:3000/meter/>.
 
 ## Commands
 
-| Command             | What it does                              |
-| ------------------- | ----------------------------------------- |
-| `pnpm dev`          | Run every app in watch mode               |
-| `pnpm build`        | Build all packages in dependency order    |
-| `pnpm lint`         | ESLint across the workspace               |
-| `pnpm typecheck`    | `tsc --noEmit` in every package           |
-| `pnpm test`         | Run tests (no test runner configured yet) |
-| `pnpm format`       | Rewrite files with Prettier               |
-| `pnpm format:check` | Verify formatting without writing         |
-| `pnpm clean`        | Remove build output                       |
+| Command          | What it does                                           |
+| ---------------- | ------------------------------------------------------ |
+| `pnpm dev`       | Run the apps in watch mode                             |
+| `pnpm build`     | Build every package, export the site to `apps/web/out` |
+| `pnpm preview`   | Serve the exported site at a GitHub Pages-like subpath |
+| `pnpm test`      | Playwright suite: layout, accessibility, and behaviour |
+| `pnpm verify`    | Format, lint, typecheck, build, then test              |
+| `pnpm lint`      | ESLint across the workspace                            |
+| `pnpm typecheck` | `tsc --noEmit` in every package                        |
+| `pnpm format`    | Rewrite files with Prettier                            |
+| `pnpm capture`   | Regenerate the screenshots and GIF in `docs/`          |
+| `pnpm og`        | Regenerate `apps/web/public/og.png`                    |
 
-## Local ports
+## Testing
 
-| Service | Port | URL                          |
-| ------- | ---- | ---------------------------- |
-| Web     | 3000 | http://localhost:3000        |
-| API     | 4000 | http://localhost:4000/health |
-
-## Before a pull request
+The suite runs against the exported build served from `/meter`, so it exercises
+the real deployment shape rather than a root-mounted dev server.
 
 ```sh
-pnpm format:check && pnpm lint && pnpm typecheck && pnpm build
+pnpm build && pnpm test
 ```
 
-CI runs the same four checks plus an API smoke test on every pull request.
+It covers:
+
+- No console errors or page exceptions on any route
+- No horizontal overflow at 1440, 768, 390, and 320 pixels, verified by
+  attempting to scroll rather than by comparing widths
+- One `h1` and a working skip link per page
+- Every button has an accessible name
+- No axe-core violations under WCAG 2.1 AA, in light and dark themes
+- Endpoint totals reconcile with the headline figure at every time range
+- Sorting, filtering, keyboard chart navigation, key reveal, copy, revoke, and
+  create
+
+## Deployment
+
+`.github/workflows/deploy.yml` builds the static export and publishes it to
+GitHub Pages. The base path and canonical origin are derived from the
+repository, so renaming the repo does not break links.
+
+Search engine handling:
+
+- `app/sitemap.ts` and `app/robots.ts` generate `sitemap.xml` and `robots.txt`
+  at build time
+- The landing page is indexable, with a canonical URL, Open Graph tags, and
+  `SoftwareApplication` structured data
+- `/dashboard` is excluded with both `noindex` and a `robots.txt` rule
+
+Note that a `robots.txt` under a project subpath is not read by crawlers, which
+only fetch it from the host root. The `noindex` meta tag on the dashboard is the
+rule that actually takes effect.
+
+## Project structure
+
+```
+apps/
+  web/        Next.js app, exported to static files
+  api/        Fastify service for work that does not belong in a request handler
+packages/
+  shared/     Types and constants used by both
+tests/
+  e2e/        Playwright audit and behaviour suites
+tools/
+  serve-export.mjs   Static server that mimics GitHub Pages
+  capture.mjs        Screenshots and the demo GIF
+  og.mjs             Open Graph card
+```
 
 ## License
 

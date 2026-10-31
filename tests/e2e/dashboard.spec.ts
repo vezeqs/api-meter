@@ -1,0 +1,229 @@
+import { expect, test } from "@playwright/test";
+
+async function readNumericColumn(
+  page: import("@playwright/test").Page,
+  rowSelector: string,
+  cellIndex: number,
+): Promise<number[]> {
+  const rows = page.locator(rowSelector);
+  const count = await rows.count();
+  const values: number[] = [];
+
+  for (let index = 0; index < count; index += 1) {
+    const text = await rows.nth(index).locator("td").nth(cellIndex).innerText();
+    values.push(Number(text.replace(/[^0-9]/g, "")));
+  }
+
+  return values;
+}
+
+function isMonotonic(values: number[], direction: "asc" | "desc"): boolean {
+  return values.every((value, index) => {
+    if (index === 0) return true;
+    const previous = values[index - 1] ?? value;
+    return direction === "asc" ? previous <= value : previous >= value;
+  });
+}
+
+function parseCompact(text: string): number {
+  const match = /([\d.]+)\s*([KMB])?/.exec(text.replace(/,/g, ""));
+  if (!match) return Number.NaN;
+
+  const value = Number(match[1]);
+  const suffix = match[2];
+
+  if (suffix === "K") return value * 1e3;
+  if (suffix === "M") return value * 1e6;
+  if (suffix === "B") return value * 1e9;
+  return value;
+}
+
+test.describe("overview", () => {
+  test("endpoint totals reconcile with the headline figure", async ({ page }) => {
+    await page.goto("/dashboard");
+
+    for (const range of ["7 days", "30 days", "90 days"]) {
+      await page.getByRole("button", { name: range }).click();
+
+      const headline = parseCompact(
+        await page.locator('[data-stat="Requests"] [data-value]').innerText(),
+      );
+
+      const rows = page.locator('section[aria-labelledby="endpoints-heading"] tbody tr');
+      const count = await rows.count();
+      let tableTotal = 0;
+
+      for (let index = 0; index < count; index += 1) {
+        const text = await rows.nth(index).locator("td").nth(0).innerText();
+        tableTotal += Number(text.replace(/[^0-9]/g, ""));
+      }
+
+      expect(headline).toBeGreaterThan(0);
+      expect(
+        Math.abs(tableTotal - headline) / headline,
+        `${range}: endpoints sum to ${tableTotal} but the headline says ${headline}`,
+      ).toBeLessThan(0.02);
+    }
+  });
+
+  test("the reporting period changes every figure", async ({ page }) => {
+    await page.goto("/dashboard");
+
+    const requests = page.locator('[data-stat="Requests"] [data-value]');
+    const thirtyDays = await requests.innerText();
+
+    await page.getByRole("button", { name: "7 days" }).click();
+    const sevenDays = await requests.innerText();
+
+    await page.getByRole("button", { name: "90 days" }).click();
+    const ninetyDays = await requests.innerText();
+
+    expect(sevenDays).not.toBe(thirtyDays);
+    expect(ninetyDays).not.toBe(thirtyDays);
+    expect(sevenDays).not.toBe(ninetyDays);
+
+    await expect(page.getByRole("button", { name: "90 days" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
+
+  test("the chart exposes values to the keyboard", async ({ page }) => {
+    await page.goto("/dashboard");
+
+    const plot = page.getByRole("group", { name: /Daily request volume/ });
+    const announcement = page.locator('p[aria-live="polite"]');
+
+    await plot.focus();
+    await page.keyboard.press("End");
+
+    await expect(announcement).toContainText("requests");
+
+    const endText = await announcement.innerText();
+    await page.keyboard.press("Home");
+    await expect(announcement).not.toHaveText(endText);
+  });
+
+  test("hovering the chart shows a tooltip", async ({ page }) => {
+    await page.goto("/dashboard");
+
+    const plot = page.getByRole("group", { name: /Daily request volume/ });
+    const box = await plot.boundingBox();
+    expect(box).not.toBeNull();
+
+    await page.mouse.move(
+      (box?.x ?? 0) + (box?.width ?? 0) * 0.5,
+      (box?.y ?? 0) + (box?.height ?? 0) * 0.5,
+    );
+
+    const announcement = page.locator('p[aria-live="polite"]');
+    await expect(announcement).toContainText("requests");
+  });
+
+  test("the endpoint table sorts in both directions", async ({ page }) => {
+    await page.goto("/dashboard");
+
+    const table = page.getByRole("region", { name: "Endpoints" });
+    const requestsHeader = table.getByRole("button", { name: "Requests" });
+
+    await requestsHeader.click();
+    await expect(table.locator('th[aria-sort="ascending"]')).toHaveCount(1);
+
+    const ascending = await readNumericColumn(
+      page,
+      'section[aria-labelledby="endpoints-heading"] tbody tr',
+      0,
+    );
+    expect(isMonotonic(ascending, "asc")).toBe(true);
+
+    await requestsHeader.click();
+    await expect(table.locator('th[aria-sort="descending"]')).toHaveCount(1);
+
+    const descending = await readNumericColumn(
+      page,
+      'section[aria-labelledby="endpoints-heading"] tbody tr',
+      0,
+    );
+    expect(isMonotonic(descending, "desc")).toBe(true);
+  });
+
+  test("the endpoint filter narrows the table and reports emptiness", async ({ page }) => {
+    await page.goto("/dashboard");
+
+    const filter = page.getByLabel("Filter endpoints");
+    const rows = page.locator('section[aria-labelledby="endpoints-heading"] tbody tr');
+
+    await filter.fill("webhooks");
+    await expect(rows).toHaveCount(1);
+
+    await filter.fill("nothing-matches-this");
+    await expect(rows).toHaveCount(1);
+    await expect(rows.first()).toContainText("No endpoints match");
+
+    await filter.fill("");
+    await expect(rows.first()).not.toContainText("No endpoints match");
+  });
+});
+
+test.describe("api keys", () => {
+  test("revealing a key shows the full secret and hides it again", async ({ page }) => {
+    await page.goto("/dashboard/keys");
+
+    const secret = page.locator("code").first();
+    await expect(secret).toContainText("•");
+
+    await page.getByRole("button", { name: "Reveal key for Production" }).click();
+    await expect(secret).not.toContainText("•");
+    await expect(secret).toContainText("mk_live_");
+
+    await page.getByRole("button", { name: "Hide key for Production" }).click();
+    await expect(secret).toContainText("•");
+  });
+
+  test("copying a key writes the secret to the clipboard", async ({ page }) => {
+    await page.goto("/dashboard/keys");
+
+    await page.getByRole("button", { name: "Copy key for Production" }).click();
+
+    const clipboard = await page.evaluate(() => navigator.clipboard.readText());
+    expect(clipboard).toMatch(/^mk_live_[0-9a-f]+$/);
+  });
+
+  test("revoking requires a confirmation step", async ({ page }) => {
+    await page.goto("/dashboard/keys");
+
+    const row = page.getByRole("row").filter({ hasText: "Production" });
+
+    await page.getByRole("button", { name: "Revoke key for Production" }).click();
+    await expect(row.getByRole("button", { name: "Confirm" })).toBeVisible();
+
+    await row.getByRole("button", { name: "Confirm" }).click();
+    await expect(row.getByText("revoked")).toBeVisible();
+  });
+
+  test("creating a key adds it to the table in full", async ({ page }) => {
+    await page.goto("/dashboard/keys");
+
+    const before = await page.getByRole("row").count();
+
+    await page.getByLabel("New key name").fill("Billing worker");
+    await page.getByRole("button", { name: "Create key" }).click();
+
+    await expect(page.getByRole("row")).toHaveCount(before + 1);
+
+    const row = page.getByRole("row").filter({ hasText: "Billing worker" });
+    await expect(row).toBeVisible();
+    await expect(row.locator("code")).toContainText("mk_live_");
+    await expect(row.locator("code")).not.toContainText("•");
+  });
+
+  test("the create button stays disabled until a name is entered", async ({ page }) => {
+    await page.goto("/dashboard/keys");
+
+    const submit = page.getByRole("button", { name: "Create key" });
+    await expect(submit).toBeDisabled();
+
+    await page.getByLabel("New key name").fill("x");
+    await expect(submit).toBeEnabled();
+  });
+});

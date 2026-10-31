@@ -1,20 +1,63 @@
 :root {
-  --color-bg: #ffffff;
-  --color-fg: #18181b;
-  --color-muted: #52525b;
-  --color-accent: #4f46e5;
-  --space-1: 0.5rem;
-  --space-2: 1rem;
-  --space-3: 2rem;
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light;
+
+  --paper: #f7f6f2;
+  --surface: #ffffff;
+  --surface-sunk: #f0efe9;
+  --ink: #14140f;
+  --ink-2: #5a5a52;
+  --ink-3: #63635c;
+  --rule: #e0ded6;
+  --rule-strong: #c9c6bc;
+  --accent: #a8431c;
+  --accent-ink: #ffffff;
+  --accent-wash: #f4e9e3;
+  --ok: #2f6b4f;
+  --ok-wash: #e6efe9;
+
+  --font-ui:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono:
+    ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  --fs-label: 0.6875rem;
+  --fs-sm: 0.8125rem;
+  --fs-base: 0.875rem;
+  --fs-md: 1rem;
+  --fs-lg: 1.375rem;
+  --fs-xl: 2rem;
+  --fs-2xl: clamp(2.25rem, 6vw, 3.75rem);
+
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+  --sp-8: 4rem;
+
+  --rail: 13.5rem;
+  --radius: 2px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-bg: #09090b;
-    --color-fg: #fafafa;
-    --color-muted: #a1a1aa;
-    --color-accent: #818cf8;
+    color-scheme: dark;
+
+    --paper: #0e0e0c;
+    --surface: #161614;
+    --surface-sunk: #101010;
+    --ink: #edebe3;
+    --ink-2: #a3a29a;
+    --ink-3: #8f8e85;
+    --rule: #272723;
+    --rule-strong: #3b3b35;
+    --accent: #e4733f;
+    --accent-ink: #16110d;
+    --accent-wash: #2a1d16;
+    --ok: #6fbf94;
+    --ok-wash: #16241c;
   }
 }
 
@@ -24,43 +67,134 @@
   box-sizing: border-box;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
-  background: var(--color-bg);
-  color: var(--color-fg);
-  font-family: var(--font-sans);
-  line-height: 1.6;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--fs-base);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-main {
-  max-width: 40rem;
-  margin: 0 auto;
-  padding: var(--space-3) var(--space-2);
-}
-
-h1 {
-  margin-block: 0 var(--space-1);
-  font-size: clamp(2rem, 6vw, 3rem);
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-}
-
+h1,
+h2,
+h3,
+h4,
 p,
-li {
-  color: var(--color-muted);
+figure,
+blockquote {
+  margin: 0;
 }
 
-ul {
-  padding-left: 1.25rem;
+h1,
+h2,
+h3 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 a {
-  color: var(--color-accent);
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+svg {
+  display: block;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
+  border-radius: var(--radius);
+}
+
+/* Figures always align in columns. */
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.rule {
+  border: 0;
+  border-top: 1px solid var(--rule);
+  margin: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--sp-4);
+  top: -3rem;
+  z-index: 100;
+  background: var(--ink);
+  color: var(--paper);
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius);
+  font-size: var(--fs-sm);
+}
+
+.skip-link:focus {
+  top: var(--sp-4);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {

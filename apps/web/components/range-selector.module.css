@@ -1,0 +1,35 @@
+.group {
+  display: inline-flex;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.option {
+  padding: 0.375rem 0.75rem;
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+  letter-spacing: 0.04em;
+  border-right: 1px solid var(--rule);
+  white-space: nowrap;
+}
+
+.option:last-child {
+  border-right: 0;
+}
+
+.option:hover {
+  background: var(--surface-sunk);
+  color: var(--ink);
+}
+
+.option[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.option[aria-pressed="true"]:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
