@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
-import { readFileSync, readdirSync } from "node:fs";
+import { mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { connect } from "node:net";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -75,6 +76,13 @@ describe("test harness", () => {
 });
 
 describe("preview server", () => {
+  // The preview suite exercises the server's mount rules, not the export's
+  // contents, so it serves a two-file fixture. Without this, every test here
+  // needed `pnpm build` first and failed on a clean clone.
+  const EXPORT_FIXTURE = mkdtempSync(join(tmpdir(), "api-meter-export-"));
+  writeFileSync(join(EXPORT_FIXTURE, "index.html"), "<!doctype html><title>fixture</title>\n");
+  writeFileSync(join(EXPORT_FIXTURE, "404.html"), "<!doctype html><title>not found</title>\n");
+
   // The assertions below expect the defaults, so pin them rather than
   // inheriting whatever HOST or BASE_PATH the caller's shell exports.
   function spawnPreview(port: number, extraEnv: Record<string, string | undefined> = {}) {
@@ -83,6 +91,7 @@ describe("preview server", () => {
       PORT: String(port),
       HOST: "127.0.0.1",
       BASE_PATH: "/api-meter",
+      EXPORT_ROOT: EXPORT_FIXTURE,
       ...extraEnv,
     };
     for (const key of Object.keys(env)) if (env[key] === undefined) delete env[key];
