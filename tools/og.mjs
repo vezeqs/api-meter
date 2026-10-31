@@ -6,7 +6,7 @@
 import { chromium } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { BASE_PATH, SITE_URL } from "../apps/web/lib/site-config.mjs";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
@@ -15,10 +15,15 @@ const OUTPUT = process.env.OG_OUTPUT ?? join(ROOT, "apps/web/public/og.png");
 // Same coordinates the site uses, so the card cannot advertise a dead address.
 const DISPLAY_URL = `${SITE_URL.replace(/^https?:\/\//, "")}${BASE_PATH}`;
 
-const METERS = [
-  { label: "Requests this cycle", percent: 92, value: "1.84M", limit: "2.00M" },
+/**
+ * The same three quotas the product renders — the card advertises the real
+ * account, so the requests meter is over limit like the dashboard's.
+ * tests/unit/og.test.ts pins every row to getBillingCycle().quotas.
+ */
+export const METERS = [
+  { label: "Requests this cycle", percent: 125, value: "2.50M", limit: "2.00M" },
   { label: "Event storage", percent: 26, value: "6.4 GB", limit: "25.0 GB" },
-  { label: "Seats", percent: 60, value: "3", limit: "5" },
+  { label: "Webhook deliveries", percent: 84, value: "421K", limit: "500K" },
 ];
 
 const bars = METERS.map(
@@ -28,8 +33,8 @@ const bars = METERS.map(
         <span class="name">${meter.label}</span>
         <span class="pct">${meter.percent}%</span>
       </div>
-      <div class="track"><div class="fill" style="width:${meter.percent}%"></div></div>
-      <div class="row foot"><span>${meter.value}</span><span>${meter.limit}</span></div>
+      <div class="track"><div class="fill" style="width:${Math.min(meter.percent, 100)}%"></div></div>
+      <div class="row foot"><span>${meter.value}${meter.percent > 100 ? " · over limit" : ""}</span><span>${meter.limit}</span></div>
     </div>`,
 ).join("");
 
@@ -116,12 +121,25 @@ const html = `<!doctype html>
   </body>
 </html>`;
 
-const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1200, height: 630 } });
+async function main() {
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newPage({ viewport: { width: 1200, height: 630 } });
 
-await page.setContent(html, { waitUntil: "load" });
-await mkdir(dirname(OUTPUT), { recursive: true });
-await page.screenshot({ path: OUTPUT });
+    await page.setContent(html, { waitUntil: "load" });
+    await mkdir(dirname(OUTPUT), { recursive: true });
+    await page.screenshot({ path: OUTPUT });
+    await page.close();
+  } finally {
+    await browser.close();
+  }
 
-await browser.close();
-process.stdout.write(`wrote ${OUTPUT}\n`);
+  process.stdout.write(`wrote ${OUTPUT}\n`);
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((error) => {
+    process.stderr.write(`${error.stack ?? error}\n`);
+    process.exit(1);
+  });
+}

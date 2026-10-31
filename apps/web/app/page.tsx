@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { APP_NAME, APP_TAGLINE, PLANS } from "@production/shared";
+import { APP_NAME, APP_TAGLINE, findPlan, PLANS } from "@production/shared";
 import { QuotaMeter } from "@/components/quota-meter";
 import { Sparkline } from "@/components/sparkline";
 import { getBillingCycle, getUsageSummary } from "@/lib/data";
@@ -8,6 +8,7 @@ import styles from "./landing.module.css";
 
 const billing = getBillingCycle();
 const summary = getUsageSummary("30d");
+const plan = findPlan(billing.planId);
 
 const TRACKED = [
   {
@@ -23,7 +24,7 @@ const TRACKED = [
   {
     index: "03",
     title: "Spend",
-    body: "Metered at twelve dollars per million requests beyond the included allowance. No rounding in the provider's favour.",
+    body: `Metered at ${formatUsd(plan?.overagePerMillionUsd ?? 0, 0)} per million requests beyond the included allowance. No rounding in the provider's favour.`,
   },
 ] as const;
 

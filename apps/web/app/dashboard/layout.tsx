@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { APP_NAME } from "@production/shared";
+import { APP_NAME, findPlan } from "@production/shared";
 import { NavLinks } from "@/components/nav-links";
+import { getBillingCycle } from "@/lib/data";
+import { formatCompact } from "@/lib/format";
 import styles from "./dashboard.module.css";
 
 export const metadata: Metadata = {
@@ -26,7 +28,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
         <div className={styles.railFoot}>
           <p className="label">Plan</p>
-          <p className={`num ${styles.plan}`}>Pro · 2M req</p>
+          <p className={`num ${styles.plan}`}>
+            {(() => {
+              const plan = findPlan(getBillingCycle().planId);
+              return `${plan?.name ?? "?"} · ${formatCompact(plan?.includedRequests ?? 0)} req`;
+            })()}
+          </p>
           <Link href="/" className={styles.back}>
             Back to site
           </Link>

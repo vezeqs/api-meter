@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import { APP_NAME, APP_TAGLINE } from "@production/shared";
+import { APP_NAME, APP_TAGLINE, PLANS } from "@production/shared";
 import { absoluteUrl, BASE_PATH, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
@@ -75,11 +75,12 @@ const STRUCTURED_DATA = {
   operatingSystem: "Web",
   description: DESCRIPTION,
   url: absoluteUrl("/"),
-  offers: [
-    { "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD" },
-    { "@type": "Offer", name: "Pro", price: "49", priceCurrency: "USD" },
-    { "@type": "Offer", name: "Team", price: "199", priceCurrency: "USD" },
-  ],
+  offers: PLANS.map((plan) => ({
+    "@type": "Offer",
+    name: plan.name,
+    price: String(plan.monthlyPriceUsd),
+    priceCurrency: "USD",
+  })),
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
