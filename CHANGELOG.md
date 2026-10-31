@@ -4,7 +4,10 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.4] - 2026-10-31
+
+Third audit pass. Fourteen findings, recorded in
+`docs/audit-2026-10-31-third-pass.md`.
 
 ### Added
 
@@ -13,6 +16,76 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   smoke test for `capture.mjs`.
 - Unit coverage that no tool imports TypeScript and that every tool parses as
   an ES module.
+- `tests/unit/og.test.ts` pins every meter on the Open Graph card to
+  `getBillingCycle().quotas`, so the card can no longer advertise a figure the
+  product disowns.
+- `tests/unit/copy.test.ts` scans for hand-typed plan figures and versions in
+  the landing copy, structured data, the plan badge, and the health endpoint.
+- End-to-end coverage that the chart's hover marker stays circular at 1440 and
+  390 px.
+- `BASE_PATH` is documented in `.env.example` as the tools' explicit subpath
+  override.
+
+### Changed
+
+- Deployment coordinates live in `apps/web/lib/site-config.mjs`, a plain ESM
+  module imported by both the app and the Node tools. The tools no longer
+  import `site.ts`, so they do not depend on Node's TypeScript stripping.
+- `tools/capture.mjs` separates the server bind address (`HOST`) from the
+  client address (`CONNECT_HOST`). `HOST=0.0.0.0` now works, and the client
+  still connects to loopback by default.
+- README no longer pins a hand-typed line count; the command to measure it
+  remains.
+- `serve-export.mjs` and `playwright.config.ts` derive the deployment subpath
+  from `site-config.mjs`, so `NEXT_PUBLIC_BASE_PATH` now drives the build, the
+  preview, and the test suite identically. `BASE_PATH` stays as an override.
+- `pnpm test:unit` resolves `@production/shared` through a new `source` export
+  condition, so the suite needs no build on a clean clone — as documented.
+- The Open Graph card shows the real quotas: requests 2.50M of 2.00M (over
+  limit), storage 6.4 GB of 25.0 GB, webhook deliveries 421K of 500K — instead
+  of a fictitious 92%-of-plan account and a "Seats 3 of 5" meter that matched
+  no plan.
+- The landing overage copy, the `SoftwareApplication` offers, and the
+  dashboard plan badge derive from `PLANS` rather than typed literals.
+- The health endpoint reports the version from `apps/api/package.json`.
+- The chart's hover marker is an HTML overlay positioned by percentage, so it
+  renders as a circle at any aspect ratio; the SVG circle it replaces rendered
+  as a tall ellipse at every viewport.
+
+### Fixed
+
+- The 1.0.2 and 1.0.3 entries now carry the test counts they promise.
+- The audit's F18 wording now distinguishes the deployment host (moved out of
+  the tools) from the loopback origin used by the local preview.
+- The preview server crashed on a malformed percent-escape: a bare `%` in the
+  request path threw `URIError` out of the handler and killed the process. It
+  now answers 404 and keeps serving.
+- The preview server also died on a malformed `Host` header — `new URL` threw
+  inside the same handler. It now answers 400.
+- The preview server resolved unprefixed paths (`/index.html`, `/dashboard/`)
+  even though GitHub Pages only serves the export under the project subpath,
+  which would have let an unprefixed link pass locally and 404 in production.
+  Paths outside the mount now return 404.
+- Creating a second API key under the same name announced nothing, because the
+  live-region text was unchanged. The key's prefix is announced too, so repeat
+  names still produce new text.
+- The preview-server test inherited the caller's `HOST` and `BASE_PATH` while
+  asserting their defaults; a non-default shell made it fail for no reason.
+- `pnpm test:unit` failed on a clean checkout with `ERR_MODULE_NOT_FOUND` —
+  it resolved `@production/shared` to the gitignored `dist/` and only CI's
+  task order hid it.
+- `capture.mjs` could orphan the preview server when `chromium.launch()`
+  failed, and accepted any HTTP 200 as the export. The launch is inside the
+  guarded section now, and the readiness probe requires the served page to
+  identify itself as the site.
+- The base-path link check could pass over an empty set if a route ever
+  rendered no root-relative anchors; it now asserts a minimum count, like the
+  accessible-name check.
+- The keys screen claimed a secret "is written once and never returned again"
+  while the Reveal control re-shows any active secret on demand; the copy now
+  states what the controls do.
+- `AGENTS.md` and the README pointed at the first audit when asked for the
+  last one; they now name the dated series.
 
 ### Changed
 

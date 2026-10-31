@@ -19,7 +19,7 @@ deployed as a static export at <https://vezeqs.github.io/api-meter/>.
 | How is a number written on screen?         | `apps/web/lib/format.ts`            |
 | What is the base path, what is the origin? | `apps/web/lib/site.ts`              |
 | Why does this page look like this?         | `apps/web/app/globals.css` (tokens) |
-| What did the last audit find?              | `docs/audit-2026-10-30.md`          |
+| What did the last audit find?              | `docs/audit-*.md` — newest wins     |
 | Why is the CI shaped this way?             | `.github/workflows/ci.yml`          |
 
 ## Invariants
@@ -27,19 +27,21 @@ deployed as a static export at <https://vezeqs.github.io/api-meter/>.
 Rules a change must not break. Each one is enforced; the test column says by
 what.
 
-| #   | Invariant                                                                                                                                  | Enforced by                                                       |
-| --- | ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
-| 1   | A billing figure never moves when the chart window changes. The same account cannot be 30% through its allowance at 7 days and 358% at 90. | e2e "the quota panel is cycle-scoped"                             |
-| 2   | Spend is overage only. The plan fee is separate; charging the whole volume at the overage rate overstates the invoice.                     | unit "charges overage only", e2e "cycle spend bills overage only" |
-| 3   | Allowances and rates come from `PLANS`. No literal `2_000_000` anywhere else.                                                              | unit "takes the requests allowance from the plan"                 |
-| 4   | Endpoint totals reconcile with the headline figure within 2%.                                                                              | unit + e2e "endpoint totals reconcile"                            |
-| 5   | Rendering is deterministic: fixed seed, fixed `REFERENCE_DATE`, no `Date.now()` or `Math.random()` during render.                          | hydration — any mismatch is visible immediately                   |
-| 6   | Every internal link carries `/api-meter`.                                                                                                  | e2e "links point through the deployment base path"                |
-| 7   | A meter never reports `aria-valuenow` above `aria-valuemax`.                                                                               | e2e "the over-limit meter reports a valid ARIA range"             |
-| 8   | No horizontal page overflow at 1440, 768, 390, or 320 px.                                                                                  | e2e "no horizontal page overflow"                                 |
-| 9   | Every text colour clears 4.5:1 in light and dark.                                                                                          | e2e axe-core, both themes                                         |
-| 10  | Every image the README shows exists and has the expected dimensions.                                                                       | unit `assets.test.ts`                                             |
-| 11  | No tool hardcodes the deployment host or the preview port and subpath.                                                                     | unit `tools.test.ts`                                              |
+| #   | Invariant                                                                                                                                     | Enforced by                                                       |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| 1   | A billing figure never moves when the chart window changes. The same account cannot be 30% through its allowance at 7 days and 358% at 90.    | e2e "the quota panel is cycle-scoped"                             |
+| 2   | Spend is overage only. The plan fee is separate; charging the whole volume at the overage rate overstates the invoice.                        | unit "charges overage only", e2e "cycle spend bills overage only" |
+| 3   | Allowances and rates come from `PLANS`. No literal `2_000_000` anywhere else.                                                                 | unit "takes the requests allowance from the plan"                 |
+| 4   | Endpoint totals reconcile with the headline figure within 2%.                                                                                 | unit + e2e "endpoint totals reconcile"                            |
+| 5   | Rendering is deterministic: fixed seed, fixed `REFERENCE_DATE`, no `Date.now()` or `Math.random()` during render.                             | hydration — any mismatch is visible immediately                   |
+| 6   | Every internal link carries `/api-meter`.                                                                                                     | e2e "links point through the deployment base path"                |
+| 7   | A meter never reports `aria-valuenow` above `aria-valuemax`.                                                                                  | e2e "the over-limit meter reports a valid ARIA range"             |
+| 8   | No horizontal page overflow at 1440, 768, 390, or 320 px.                                                                                     | e2e "no horizontal page overflow"                                 |
+| 9   | Every text colour clears 4.5:1 in light and dark.                                                                                             | e2e axe-core, both themes                                         |
+| 10  | Every image the README shows exists and has the expected dimensions.                                                                          | unit `assets.test.ts`                                             |
+| 11  | No tool hardcodes the deployment host or the preview port and subpath — and neither does the test harness.                                    | unit `tools.test.ts`                                              |
+| 12  | The preview server only answers under the deployment subpath and survives malformed request input (headers included).                         | unit "serves only under the deployment subpath", "malformed Host" |
+| 13  | A figure that names a plan, quota, or price is derived from `PLANS` / the billing cycle — never typed. This includes copy, badges, and cards. | unit `copy.test.ts`, unit `og.test.ts`                            |
 
 ## Commands
 
@@ -124,6 +126,36 @@ overrides `.env.example` documents. Pin every variable the assertion names.
 **Test counts drift.** The README carried per-suite counts; they doubled in the
 commit after they were written. Counts belong in the dated changelog, not in a
 living document.
+
+**Request metadata is untrusted input too.** A bare `%` in the path was fixed to
+answer 404 — then `new URL(request.url, "http://" + host)` still threw on a
+malformed `Host` header and killed the whole preview server. Parse inside a
+guard; answer 400.
+
+**The preview only serves under the mount.** Anything outside `BASE_PATH` is a
+404, because GitHub Pages answers 404 there. A server that resolves unprefixed
+paths hides the exact bug `next/link` is supposed to prevent.
+
+**One coordinate, one variable.** `NEXT_PUBLIC_BASE_PATH` (documented, drives
+the build) and `BASE_PATH` (preview override) once disagreed: the export's
+links pointed at one subpath while the server mounted another. Both now derive
+from `site-config.mjs`; the literal lives there only.
+
+**`non-scaling-stroke` fixes strokes, not geometry.** A `circle` inside a
+`preserveAspectRatio="none"` SVG renders as an ellipse at every viewport
+(measured 5×12 px at 1440). Point markers belong in the HTML overlay,
+positioned by percentage — the sparkline learned this first.
+
+**A test command must pass on a clean clone.** `pnpm test:unit` resolved
+`@production/shared` to gitignored `dist/`; CI masked it because turbo's
+`^build` ran first. The `source` export condition points the suite at `src/`.
+If a command needs a build, say so — or make it not.
+
+**Decorative numbers drift.** The OG card typed "1.84M/2.00M" and "Seats 3 of
+5" — a meter F7 removed for contradicting the plan record. Any surface that
+shows plan or cycle figures derives them or carries a test pinning them to
+`PLANS`/`getBillingCycle()`. That includes marketing copy, `ld+json`, and the
+version an endpoint reports.
 
 ## Definition of done
 
