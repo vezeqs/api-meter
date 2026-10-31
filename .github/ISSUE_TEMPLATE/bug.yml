@@ -1,0 +1,60 @@
+name: Bug report
+description: Something breaks, errors, or behaves differently than expected.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Include the exact steps and the error output so
+        it can be reproduced without guessing.
+  - type: input
+    id: area
+    attributes:
+      label: Area
+      description: Which part is affected, e.g. `apps/web`, `apps/api`, or `packages/shared`.
+      placeholder: apps/web
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Numbered steps, starting from a clean checkout.
+      placeholder: |
+        1. pnpm install
+        2. pnpm dev
+        3. Open http://localhost:3000
+        4. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include the full error message and stack trace. Redact secrets.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Node version, package manager version, and operating system.
+      placeholder: Node 24.22.2, pnpm 10.34.8, Linux
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and this is not a duplicate.
+          required: true
+        - label: I removed secrets, tokens, and personal data from the logs.
+          required: true

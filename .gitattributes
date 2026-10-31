@@ -1,0 +1,26 @@
+* text=auto eol=lf
+
+*.ts text
+*.tsx text
+*.js text
+*.jsx text
+*.mjs text
+*.cjs text
+*.css text
+*.json text
+*.md text
+*.yml text
+*.yaml text
+*.svg text
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.avif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+
+# Collapse the lockfile in GitHub's UI, but keep it reviewable
+pnpm-lock.yaml linguist-generated=true
