@@ -11,12 +11,16 @@ Do not open a public issue, and do not include exploit details in a pull
 request. Include the affected version, the steps to reproduce, and the impact
 you believe the issue has.
 
-Expect an acknowledgement within 72 hours. Once a fix is ready, it ships with a
-security advisory crediting the reporter unless anonymity is requested.
+This project is maintained on a best-effort basis. There is no on-call rotation
+and no guaranteed response window; expect a reply when one can be given. Once a
+fix is ready, it ships with a security advisory crediting the reporter unless
+anonymity is requested.
 
 ## Supported versions
 
-This project is pre-release. Only the latest commit on `main` is supported.
+Only the latest release is supported. This is a demonstration build with no
+production deployment, so the realistic attack surface is the static site and
+the pipeline that builds it.
 
 ## Handling secrets
 

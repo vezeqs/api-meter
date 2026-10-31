@@ -39,6 +39,7 @@ what.
 | 8   | No horizontal page overflow at 1440, 768, 390, or 320 px.                                                                                  | e2e "no horizontal page overflow"                                 |
 | 9   | Every text colour clears 4.5:1 in light and dark.                                                                                          | e2e axe-core, both themes                                         |
 | 10  | Every image the README shows exists and has the expected dimensions.                                                                       | unit `assets.test.ts`                                             |
+| 11  | No tool hardcodes the deployment host or the preview address.                                                                              | unit `tools.test.ts`                                              |
 
 ## Commands
 
@@ -89,10 +90,30 @@ Measure with the command in the README before changing one.
 that nothing consumed — a database, auth, SMTP, Stripe, Sentry. A contributor
 reasonably believed all of it existed.
 
+**An assertion over an empty set always passes.** The accessible-name check ran
+`querySelectorAll("button")` on the landing page, which has no buttons, so it
+asserted `0 === 0` for two releases. Any test that iterates a collection must
+first assert the collection is not empty.
+
+**Hydration deletes DOM you inject.** To prove an accessibility test could fail,
+injecting an unnamed link into the built HTML looked reasonable. React removes
+nodes it did not render during hydration, so the injection was gone before the
+assertion ran and the test passed. Change the source and rebuild; editing
+`apps/web/out` proves nothing.
+
+**Tools read the deployment URL from `lib/site.ts`.** `og.mjs` and
+`capture.mjs` once pasted the host, so a rename would have left the social card
+advertising a dead address.
+
+**Test counts drift.** The README carried per-suite counts; they doubled in the
+commit after they were written. Counts belong in the dated changelog, not in a
+living document.
+
 ## Definition of done
 
 - [ ] `pnpm verify` passes.
 - [ ] New numbers are derived, not typed in.
+- [ ] New tests can fail: prove it by breaking the thing once.
 - [ ] New controls are reachable and operable by keyboard.
 - [ ] Visual changes are followed by `pnpm capture`.
 - [ ] New environment variables are added to `.env.example` **and** read somewhere.

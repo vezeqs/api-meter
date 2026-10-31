@@ -7,9 +7,13 @@ import { chromium } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { BASE_PATH, SITE_URL } from "../apps/web/lib/site.ts";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const OUTPUT = join(ROOT, "apps/web/public/og.png");
+
+// Same coordinates the site uses, so the card cannot advertise a dead address.
+const DISPLAY_URL = `${SITE_URL.replace(/^https?:\/\//, "")}${BASE_PATH}`;
 
 const METERS = [
   { label: "Requests this cycle", percent: 92, value: "1.84M", limit: "2.00M" },
@@ -107,7 +111,7 @@ const html = `<!doctype html>
     </div>
     <div class="footer">
       <span>Usage and billing for API products</span>
-      <span>vezeqs.github.io/api-meter</span>
+      <span>${DISPLAY_URL}</span>
     </div>
   </body>
 </html>`;

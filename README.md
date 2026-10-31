@@ -82,10 +82,14 @@ at the live deployment:
 PLAYWRIGHT_ORIGIN=https://vezeqs.github.io pnpm test:e2e
 ```
 
-| Suite                   | Count | Covers                                                                                         |
-| ----------------------- | ----- | ---------------------------------------------------------------------------------------------- |
-| Unit (`node:test`)      | 32    | Number formatting, unit rollover, billing arithmetic, endpoint reconciliation, asset integrity |
-| End-to-end (Playwright) | 43    | Layout, console health, SEO output, axe-core, every control                                    |
+| Suite                   | What it proves                                                                                               |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Unit (`node:test`)      | Number formatting, unit rollover, billing arithmetic, endpoint reconciliation, asset integrity, tool hygiene |
+| End-to-end (Playwright) | Layout, console health, SEO output, axe-core, every control                                                  |
+
+`pnpm test` prints the count for both suites. Per-release figures live in
+[`CHANGELOG.md`](CHANGELOG.md), where a snapshot is dated and cannot silently
+drift.
 
 The end-to-end suite checks, on all three routes:
 
@@ -93,7 +97,8 @@ The end-to-end suite checks, on all three routes:
 - No horizontal overflow at 1440, 768, 390, and 320 px — verified by
   attempting to scroll, not by comparing widths
 - One `h1` and a working skip link
-- Every button has an accessible name
+- Every interactive element has an accessible name, with a guard that fails if
+  a page has nothing to check
 - No axe-core violations under WCAG 2.1 AA, in **light and dark** themes
 - Internal links carry the deployment subpath
 - `sitemap.xml` and `robots.txt` are served with correct absolute URLs

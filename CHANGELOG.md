@@ -4,6 +4,37 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2026-10-31
+
+Second audit pass. Six findings, recorded in `docs/audit-2026-10-31.md`; the
+counts below are the snapshot this release was tagged with.
+
+### Added
+
+- `tests/unit/tools.test.ts`: no tool may hardcode the deployment URL, and the
+  preview server must print an address that opens as-is.
+- End-to-end coverage that each created API key is announced with its own name.
+
+### Changed
+
+- The accessible-name check now covers every interactive element and fails when
+  a page has nothing to check. It previously asserted over an empty set on the
+  landing page, so it could not fail there.
+- README describes what each suite proves and defers counts to this file, where
+  a dated snapshot cannot silently drift.
+- `apps/web` declares `"type": "module"`, so the tools can import the site
+  constants without a reparse warning.
+
+### Fixed
+
+- Creating a second API key produced no announcement, because the live-region
+  text was a constant.
+- The Open Graph card and the capture script hardcoded the deployment URL
+  instead of reading `lib/site.ts`.
+- `pnpm preview` printed `http://127.0.0.1:4321/api-meter//`.
+- `SECURITY.md` promised a 72-hour acknowledgement and still described a
+  released project as pre-release.
+
 ## [1.0.1] - 2026-10-30
 
 Documentation and test hardening. No change to the product.
@@ -105,6 +136,7 @@ First tagged release. The dashboard is complete, audited, and deployed.
 - Issue templates, pull request template, and Dependabot configuration.
 - MIT license, security policy, contribution guide, and code of conduct.
 
+[1.0.2]: https://github.com/vezeqs/api-meter/tree/v1.0.2
 [1.0.1]: https://github.com/vezeqs/api-meter/tree/v1.0.1
 [1.0.0]: https://github.com/vezeqs/api-meter/tree/v1.0.0
 [0.1.0]: https://github.com/vezeqs/api-meter/commits/main

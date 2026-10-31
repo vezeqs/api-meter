@@ -67,18 +67,50 @@ test.describe("document structure", () => {
       await expect(page.getByRole("link", { name: "Skip to content" })).toHaveCount(1);
     });
 
-    test(`every button has an accessible name on ${route}`, async ({ page }) => {
+    test(`every interactive element has an accessible name on ${route}`, async ({ page }) => {
       await page.goto(route);
 
-      const unnamed = await page.evaluate(
-        () =>
-          Array.from(document.querySelectorAll("button")).filter((button) => {
-            const label = button.getAttribute("aria-label");
-            return !(label && label.trim().length > 0) && !button.textContent?.trim();
-          }).length,
-      );
+      const result = await page.evaluate(() => {
+        const selector = "button, a[href], input, select, textarea";
+        const elements = Array.from(document.querySelectorAll(selector));
 
-      expect(unnamed).toBe(0);
+        const nameOf = (element: Element): string => {
+          const label = element.getAttribute("aria-label");
+          if (label && label.trim()) return label.trim();
+
+          const labelledBy = element.getAttribute("aria-labelledby");
+          if (labelledBy) {
+            const text = labelledBy
+              .split(/\s+/)
+              .map((id) => document.getElementById(id)?.textContent ?? "")
+              .join(" ")
+              .trim();
+            if (text) return text;
+          }
+
+          const id = element.getAttribute("id");
+          if (id) {
+            const explicit = document.querySelector(`label[for="${CSS.escape(id)}"]`);
+            if (explicit?.textContent?.trim()) return explicit.textContent.trim();
+          }
+
+          const own = (element.textContent ?? "").trim();
+          if (own) return own;
+
+          return (element.getAttribute("title") ?? "").trim();
+        };
+
+        return {
+          total: elements.length,
+          unnamed: elements
+            .filter((element) => nameOf(element).length === 0)
+            .map((element) => element.outerHTML.slice(0, 80)),
+        };
+      });
+
+      // A page with no controls would otherwise pass this vacuously.
+      expect(result.total, `${route} has nothing interactive to check`).toBeGreaterThan(0);
+      expect(result.unnamed).toEqual([]);
     });
 
     test(`links point through the deployment base path on ${route}`, async ({ page }) => {

@@ -283,3 +283,23 @@ test.describe("billing invariants", () => {
     await expect(row.getByRole("button", { name: /Copy key for Legacy importer/ })).toBeDisabled();
   });
 });
+
+test.describe("announcements", () => {
+  test("each created key is announced with its own name", async ({ page }) => {
+    await page.goto("/api-meter/dashboard/keys/");
+
+    const announcement = page.locator('p[aria-live="polite"]');
+
+    await page.getByLabel("New key name").fill("Billing worker");
+    await page.getByRole("button", { name: "Create key" }).click();
+    const first = await announcement.innerText();
+
+    await page.getByLabel("New key name").fill("Reporting worker");
+    await page.getByRole("button", { name: "Create key" }).click();
+    const second = await announcement.innerText();
+
+    expect(first).toContain("Billing worker");
+    expect(second).toContain("Reporting worker");
+    expect(second, "a second creation must change the live region").not.toBe(first);
+  });
+});

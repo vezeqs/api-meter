@@ -12,11 +12,13 @@ import { mkdir, rm, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "@playwright/test";
+import { BASE_PATH } from "../apps/web/lib/site.ts";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const DOCS = join(ROOT, "docs");
 const FRAMES = join(DOCS, ".frames");
-const BASE = "http://127.0.0.1:4321/api-meter";
+const PORT = Number(process.env.PORT ?? 4321);
+const BASE = `http://127.0.0.1:${PORT}${BASE_PATH}`;
 
 async function waitForServer(url, attempts = 60) {
   for (let attempt = 0; attempt < attempts; attempt += 1) {
@@ -40,6 +42,7 @@ async function main() {
   if (!(await waitForServer(`${BASE}/`))) {
     server = spawn(process.execPath, [join(ROOT, "tools/serve-export.mjs")], {
       cwd: ROOT,
+      env: { ...process.env, PORT: String(PORT), BASE_PATH },
       stdio: "ignore",
     });
 

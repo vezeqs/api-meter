@@ -9,7 +9,7 @@
  */
 import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
-import { extname, join, normalize, sep } from "node:path";
+import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = normalize(fileURLToPath(new URL("../apps/web/out/", import.meta.url)));
@@ -96,5 +96,5 @@ const server = createServer(async (request, response) => {
 });
 
 server.listen(PORT, HOST, () => {
-  process.stdout.write(`serving ${ROOT} at http://${HOST}:${PORT}${PREFIX}/${sep}\n`);
+  process.stdout.write(`serving ${ROOT} at http://${HOST}:${PORT}${PREFIX}/\n`);
 });
