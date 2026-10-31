@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { BASE_PATH, SITE_URL } from "../../apps/web/lib/site-config.mjs";
 
 /**
  * Routes carry the deployment subpath explicitly. Playwright resolves a
@@ -7,7 +8,11 @@ import { expect, test } from "@playwright/test";
  * the only way the same suite can target both the local export and the live
  * GitHub Pages URL.
  */
-const ROUTES = ["/api-meter/", "/api-meter/dashboard/", "/api-meter/dashboard/keys/"] as const;
+const ROUTES = [
+  `${BASE_PATH}/`,
+  `${BASE_PATH}/dashboard/`,
+  `${BASE_PATH}/dashboard/keys/`,
+] as const;
 const WIDTHS = [1440, 768, 390, 320] as const;
 
 test.describe("console health", () => {
@@ -122,8 +127,12 @@ test.describe("document structure", () => {
         ),
       );
 
+      // A page with no root-relative links would otherwise pass this vacuously.
+      expect(internal.length, `${route} has no root-relative links to check`).toBeGreaterThan(0);
+
+      const prefix = new RegExp(`^${BASE_PATH}(/|$)`);
       for (const href of internal) {
-        expect(href, `${href} is missing the base path`).toMatch(/^\/api-meter(\/|$)/);
+        expect(href, `${href} is missing the base path`).toMatch(prefix);
       }
     });
   }
@@ -131,22 +140,22 @@ test.describe("document structure", () => {
 
 test.describe("search engine handling", () => {
   test("landing page is indexable and canonical", async ({ page }) => {
-    await page.goto("/api-meter/");
+    await page.goto(`${BASE_PATH}/`);
 
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /index/);
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
       "href",
-      "https://vezeqs.github.io/api-meter/",
+      `${SITE_URL}${BASE_PATH}/`,
     );
   });
 
   test("dashboard is excluded from the index", async ({ page }) => {
-    await page.goto("/api-meter/dashboard/");
+    await page.goto(`${BASE_PATH}/dashboard/`);
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
   });
 
   test("structured data parses as JSON", async ({ page }) => {
-    await page.goto("/api-meter/");
+    await page.goto(`${BASE_PATH}/`);
 
     const raw = await page.locator('script[type="application/ld+json"]').textContent();
     expect(raw).toBeTruthy();
@@ -157,20 +166,20 @@ test.describe("search engine handling", () => {
   });
 
   test("sitemap is served and absolute", async ({ request }) => {
-    const response = await request.get("/api-meter/sitemap.xml");
+    const response = await request.get(`${BASE_PATH}/sitemap.xml`);
     expect(response.status()).toBe(200);
 
     const body = await response.text();
-    expect(body).toContain("<loc>https://vezeqs.github.io/api-meter/</loc>");
+    expect(body).toContain(`<loc>${SITE_URL}${BASE_PATH}/</loc>`);
   });
 
   test("robots.txt blocks the dashboard under the base path", async ({ request }) => {
-    const response = await request.get("/api-meter/robots.txt");
+    const response = await request.get(`${BASE_PATH}/robots.txt`);
     expect(response.status()).toBe(200);
 
     const body = await response.text();
-    expect(body).toContain("Disallow: /api-meter/dashboard");
-    expect(body).toContain("Sitemap: https://vezeqs.github.io/api-meter/sitemap.xml");
+    expect(body).toContain(`Disallow: ${BASE_PATH}/dashboard`);
+    expect(body).toContain(`Sitemap: ${SITE_URL}${BASE_PATH}/sitemap.xml`);
   });
 });
 
@@ -215,17 +224,17 @@ test.describe("accessibility", () => {
 
 test.describe("routing", () => {
   test("unknown paths return the exported 404 page", async ({ page }) => {
-    const response = await page.goto("/api-meter/does-not-exist");
+    const response = await page.goto(`${BASE_PATH}/does-not-exist`);
 
     expect(response?.status()).toBe(404);
     await expect(page.getByRole("heading", { level: 1 })).toContainText("nothing at this address");
   });
 
   test("the landing page leads to the dashboard", async ({ page }) => {
-    await page.goto("/api-meter/");
+    await page.goto(`${BASE_PATH}/`);
     await page.getByRole("link", { name: "Open the dashboard" }).click();
 
-    await expect(page).toHaveURL(/\/api-meter\/dashboard\/$/);
+    await expect(page).toHaveURL(new RegExp(`${BASE_PATH}/dashboard/$`));
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Overview");
   });
 });
