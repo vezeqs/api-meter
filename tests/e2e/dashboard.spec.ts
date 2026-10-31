@@ -40,7 +40,7 @@ function parseCompact(text: string): number {
 
 test.describe("overview", () => {
   test("endpoint totals reconcile with the headline figure", async ({ page }) => {
-    await page.goto("/dashboard");
+    await page.goto("/api-meter/dashboard/");
 
     for (const range of ["7 days", "30 days", "90 days"]) {
       await page.getByRole("button", { name: range }).click();
@@ -67,7 +67,7 @@ test.describe("overview", () => {
   });
 
   test("the reporting period changes every figure", async ({ page }) => {
-    await page.goto("/dashboard");
+    await page.goto("/api-meter/dashboard/");
 
     const requests = page.locator('[data-stat="Requests"] [data-value]');
     const thirtyDays = await requests.innerText();
@@ -89,7 +89,7 @@ test.describe("overview", () => {
   });
 
   test("the chart exposes values to the keyboard", async ({ page }) => {
-    await page.goto("/dashboard");
+    await page.goto("/api-meter/dashboard/");
 
     const plot = page.getByRole("group", { name: /Daily request volume/ });
     const announcement = page.locator('p[aria-live="polite"]');
@@ -105,7 +105,7 @@ test.describe("overview", () => {
   });
 
   test("hovering the chart shows a tooltip", async ({ page }) => {
-    await page.goto("/dashboard");
+    await page.goto("/api-meter/dashboard/");
 
     const plot = page.getByRole("group", { name: /Daily request volume/ });
     const box = await plot.boundingBox();
@@ -121,7 +121,7 @@ test.describe("overview", () => {
   });
 
   test("the endpoint table sorts in both directions", async ({ page }) => {
-    await page.goto("/dashboard");
+    await page.goto("/api-meter/dashboard/");
 
     const table = page.getByRole("region", { name: "Endpoints" });
     const requestsHeader = table.getByRole("button", { name: "Requests" });
@@ -148,7 +148,7 @@ test.describe("overview", () => {
   });
 
   test("the endpoint filter narrows the table and reports emptiness", async ({ page }) => {
-    await page.goto("/dashboard");
+    await page.goto("/api-meter/dashboard/");
 
     const filter = page.getByLabel("Filter endpoints");
     const rows = page.locator('section[aria-labelledby="endpoints-heading"] tbody tr');
@@ -167,7 +167,7 @@ test.describe("overview", () => {
 
 test.describe("api keys", () => {
   test("revealing a key shows the full secret and hides it again", async ({ page }) => {
-    await page.goto("/dashboard/keys");
+    await page.goto("/api-meter/dashboard/keys/");
 
     const secret = page.locator("code").first();
     await expect(secret).toContainText("•");
@@ -181,7 +181,7 @@ test.describe("api keys", () => {
   });
 
   test("copying a key writes the secret to the clipboard", async ({ page }) => {
-    await page.goto("/dashboard/keys");
+    await page.goto("/api-meter/dashboard/keys/");
 
     await page.getByRole("button", { name: "Copy key for Production" }).click();
 
@@ -190,7 +190,7 @@ test.describe("api keys", () => {
   });
 
   test("revoking requires a confirmation step", async ({ page }) => {
-    await page.goto("/dashboard/keys");
+    await page.goto("/api-meter/dashboard/keys/");
 
     const row = page.getByRole("row").filter({ hasText: "Production" });
 
@@ -202,7 +202,7 @@ test.describe("api keys", () => {
   });
 
   test("creating a key adds it to the table in full", async ({ page }) => {
-    await page.goto("/dashboard/keys");
+    await page.goto("/api-meter/dashboard/keys/");
 
     const before = await page.getByRole("row").count();
 
@@ -218,7 +218,7 @@ test.describe("api keys", () => {
   });
 
   test("the create button stays disabled until a name is entered", async ({ page }) => {
-    await page.goto("/dashboard/keys");
+    await page.goto("/api-meter/dashboard/keys/");
 
     const submit = page.getByRole("button", { name: "Create key" });
     await expect(submit).toBeDisabled();

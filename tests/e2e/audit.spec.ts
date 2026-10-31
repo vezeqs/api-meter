@@ -1,7 +1,13 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-const ROUTES = ["/", "/dashboard", "/dashboard/keys"] as const;
+/**
+ * Routes carry the deployment subpath explicitly. Playwright resolves a
+ * leading slash against the origin, so baking the base path into the route is
+ * the only way the same suite can target both the local export and the live
+ * GitHub Pages URL.
+ */
+const ROUTES = ["/api-meter/", "/api-meter/dashboard/", "/api-meter/dashboard/keys/"] as const;
 const WIDTHS = [1440, 768, 390, 320] as const;
 
 test.describe("console health", () => {
@@ -93,7 +99,7 @@ test.describe("document structure", () => {
 
 test.describe("search engine handling", () => {
   test("landing page is indexable and canonical", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/api-meter/");
 
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /index/);
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
@@ -103,12 +109,12 @@ test.describe("search engine handling", () => {
   });
 
   test("dashboard is excluded from the index", async ({ page }) => {
-    await page.goto("/dashboard");
+    await page.goto("/api-meter/dashboard/");
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
   });
 
   test("structured data parses as JSON", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/api-meter/");
 
     const raw = await page.locator('script[type="application/ld+json"]').textContent();
     expect(raw).toBeTruthy();
@@ -119,7 +125,7 @@ test.describe("search engine handling", () => {
   });
 
   test("sitemap is served and absolute", async ({ request }) => {
-    const response = await request.get("/sitemap.xml");
+    const response = await request.get("/api-meter/sitemap.xml");
     expect(response.status()).toBe(200);
 
     const body = await response.text();
@@ -127,7 +133,7 @@ test.describe("search engine handling", () => {
   });
 
   test("robots.txt blocks the dashboard under the base path", async ({ request }) => {
-    const response = await request.get("/robots.txt");
+    const response = await request.get("/api-meter/robots.txt");
     expect(response.status()).toBe(200);
 
     const body = await response.text();
@@ -177,14 +183,14 @@ test.describe("accessibility", () => {
 
 test.describe("routing", () => {
   test("unknown paths return the exported 404 page", async ({ page }) => {
-    const response = await page.goto("/does-not-exist");
+    const response = await page.goto("/api-meter/does-not-exist");
 
     expect(response?.status()).toBe(404);
     await expect(page.getByRole("heading", { level: 1 })).toContainText("nothing at this address");
   });
 
   test("the landing page leads to the dashboard", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/api-meter/");
     await page.getByRole("link", { name: "Open the dashboard" }).click();
 
     await expect(page).toHaveURL(/\/api-meter\/dashboard\/$/);

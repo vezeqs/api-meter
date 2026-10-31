@@ -105,6 +105,12 @@ the real deployment shape rather than a root-mounted dev server.
 pnpm build && pnpm test
 ```
 
+The same suite can be pointed at the deployed site:
+
+```sh
+PLAYWRIGHT_ORIGIN=https://vezeqs.github.io pnpm test
+```
+
 It covers:
 
 - No console errors or page exceptions on any route
