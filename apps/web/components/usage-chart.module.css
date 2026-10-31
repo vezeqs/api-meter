@@ -52,10 +52,15 @@
   stroke-dasharray: 3 3;
 }
 
-.dot {
-  fill: var(--accent);
-  stroke: var(--surface);
-  stroke-width: 1.5;
+.marker {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 1.5px var(--surface);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
 }
 
 .tooltip {

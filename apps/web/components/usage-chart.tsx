@@ -131,25 +131,27 @@ export function UsageChart({ daily }: UsageChartProps) {
           <path d={model.area} className={styles.area} />
           <path d={model.line} className={styles.line} vectorEffect="non-scaling-stroke" />
           {active ? (
-            <>
-              <line
-                x1={active.x}
-                y1="0"
-                x2={active.x}
-                y2={VIEW_H}
-                className={styles.crosshair}
-                vectorEffect="non-scaling-stroke"
-              />
-              <circle
-                cx={active.x}
-                cy={active.y}
-                r={2.5}
-                className={styles.dot}
-                vectorEffect="non-scaling-stroke"
-              />
-            </>
+            <line
+              x1={active.x}
+              y1="0"
+              x2={active.x}
+              y2={VIEW_H}
+              className={styles.crosshair}
+              vectorEffect="non-scaling-stroke"
+            />
           ) : null}
         </svg>
+
+        {active ? (
+          // The marker lives in the HTML overlay, not the stretched SVG:
+          // preserveAspectRatio="none" would render a circle as an ellipse.
+          <span
+            className={styles.marker}
+            data-chart-marker
+            style={{ left: `${(active.x / VIEW_W) * 100}%`, top: `${(active.y / VIEW_H) * 100}%` }}
+            aria-hidden="true"
+          />
+        ) : null}
 
         {active ? (
           <div className={styles.tooltip} style={{ left: `${tooltipLeft}%` }} aria-hidden="true">

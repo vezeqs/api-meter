@@ -1,4 +1,8 @@
 import { expect, test } from "@playwright/test";
+import { BASE_PATH } from "../../apps/web/lib/site-config.mjs";
+
+const DASHBOARD = `${BASE_PATH}/dashboard/`;
+const KEYS = `${BASE_PATH}/dashboard/keys/`;
 
 async function readNumericColumn(
   page: import("@playwright/test").Page,
@@ -40,7 +44,7 @@ function parseCompact(text: string): number {
 
 test.describe("overview", () => {
   test("endpoint totals reconcile with the headline figure", async ({ page }) => {
-    await page.goto("/api-meter/dashboard/");
+    await page.goto(DASHBOARD);
 
     for (const range of ["7 days", "30 days", "90 days"]) {
       await page.getByRole("button", { name: range }).click();
@@ -67,7 +71,7 @@ test.describe("overview", () => {
   });
 
   test("the reporting period changes every figure", async ({ page }) => {
-    await page.goto("/api-meter/dashboard/");
+    await page.goto(DASHBOARD);
 
     const requests = page.locator('[data-stat="Requests"] [data-value]');
     const thirtyDays = await requests.innerText();
@@ -89,7 +93,7 @@ test.describe("overview", () => {
   });
 
   test("the chart exposes values to the keyboard", async ({ page }) => {
-    await page.goto("/api-meter/dashboard/");
+    await page.goto(DASHBOARD);
 
     const plot = page.getByRole("group", { name: /Daily request volume/ });
     const announcement = page.locator('p[aria-live="polite"]');
@@ -105,7 +109,7 @@ test.describe("overview", () => {
   });
 
   test("hovering the chart shows a tooltip", async ({ page }) => {
-    await page.goto("/api-meter/dashboard/");
+    await page.goto(DASHBOARD);
 
     const plot = page.getByRole("group", { name: /Daily request volume/ });
     const box = await plot.boundingBox();
@@ -120,8 +124,33 @@ test.describe("overview", () => {
     await expect(announcement).toContainText("requests");
   });
 
+  test("the chart marker stays circular at any viewport", async ({ page }) => {
+    // The plot's SVG stretches with preserveAspectRatio="none": a <circle> in
+    // it rendered as a tall ellipse at every size. The marker must live in the
+    // HTML overlay so it stays round.
+    for (const width of [1440, 390]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(DASHBOARD);
+
+      const plot = page.getByRole("group", { name: /Daily request volume/ });
+      const box = await plot.boundingBox();
+      await page.mouse.move(
+        (box?.x ?? 0) + (box?.width ?? 0) * 0.5,
+        (box?.y ?? 0) + (box?.height ?? 0) * 0.5,
+      );
+
+      const marker = page.locator("[data-chart-marker]");
+      await expect(marker).toBeVisible();
+
+      const rect = await marker.boundingBox();
+      expect(rect, `no marker box at ${width}px`).not.toBeNull();
+      const skew = Math.abs((rect?.width ?? 0) - (rect?.height ?? 1)) / (rect?.height ?? 1);
+      expect(skew, `marker is an ellipse at ${width}px`).toBeLessThanOrEqual(0.1);
+    }
+  });
+
   test("the endpoint table sorts in both directions", async ({ page }) => {
-    await page.goto("/api-meter/dashboard/");
+    await page.goto(DASHBOARD);
 
     const table = page.getByRole("region", { name: "Endpoints" });
     const requestsHeader = table.getByRole("button", { name: "Requests" });
@@ -148,7 +177,7 @@ test.describe("overview", () => {
   });
 
   test("the endpoint filter narrows the table and reports emptiness", async ({ page }) => {
-    await page.goto("/api-meter/dashboard/");
+    await page.goto(DASHBOARD);
 
     const filter = page.getByLabel("Filter endpoints");
     const rows = page.locator('section[aria-labelledby="endpoints-heading"] tbody tr');
@@ -167,7 +196,7 @@ test.describe("overview", () => {
 
 test.describe("api keys", () => {
   test("revealing a key shows the full secret and hides it again", async ({ page }) => {
-    await page.goto("/api-meter/dashboard/keys/");
+    await page.goto(KEYS);
 
     const secret = page.locator("code").first();
     await expect(secret).toContainText("•");
@@ -181,7 +210,7 @@ test.describe("api keys", () => {
   });
 
   test("copying a key writes the secret to the clipboard", async ({ page }) => {
-    await page.goto("/api-meter/dashboard/keys/");
+    await page.goto(KEYS);
 
     await page.getByRole("button", { name: "Copy key for Production" }).click();
 
@@ -190,7 +219,7 @@ test.describe("api keys", () => {
   });
 
   test("revoking requires a confirmation step", async ({ page }) => {
-    await page.goto("/api-meter/dashboard/keys/");
+    await page.goto(KEYS);
 
     const row = page.getByRole("row").filter({ hasText: "Production" });
 
@@ -202,7 +231,7 @@ test.describe("api keys", () => {
   });
 
   test("creating a key adds it to the table in full", async ({ page }) => {
-    await page.goto("/api-meter/dashboard/keys/");
+    await page.goto(KEYS);
 
     const before = await page.getByRole("row").count();
 
@@ -218,7 +247,7 @@ test.describe("api keys", () => {
   });
 
   test("the create button stays disabled until a name is entered", async ({ page }) => {
-    await page.goto("/api-meter/dashboard/keys/");
+    await page.goto(KEYS);
 
     const submit = page.getByRole("button", { name: "Create key" });
     await expect(submit).toBeDisabled();
@@ -230,7 +259,7 @@ test.describe("api keys", () => {
 
 test.describe("billing invariants", () => {
   test("the quota panel is cycle-scoped and ignores the chart window", async ({ page }) => {
-    await page.goto("/api-meter/dashboard/");
+    await page.goto(DASHBOARD);
 
     const meter = page.getByRole("meter", { name: "Requests this cycle" });
     const before = await meter.getAttribute("aria-valuetext");
@@ -243,7 +272,7 @@ test.describe("billing invariants", () => {
   });
 
   test("the over-limit meter reports a valid ARIA range", async ({ page }) => {
-    await page.goto("/api-meter/dashboard/");
+    await page.goto(DASHBOARD);
 
     const meter = page.getByRole("meter", { name: "Requests this cycle" });
     const now = Number(await meter.getAttribute("aria-valuenow"));
@@ -254,7 +283,7 @@ test.describe("billing invariants", () => {
   });
 
   test("cycle spend bills overage only, not the included volume", async ({ page }) => {
-    await page.goto("/api-meter/dashboard/");
+    await page.goto(DASHBOARD);
 
     const requests = parseCompact(
       await page.locator('[data-stat="Requests"] [data-value]').innerText(),
@@ -273,7 +302,7 @@ test.describe("billing invariants", () => {
   });
 
   test("a revoked key cannot be revealed or copied", async ({ page }) => {
-    await page.goto("/api-meter/dashboard/keys/");
+    await page.goto(KEYS);
 
     const row = page.getByRole("row").filter({ hasText: "Legacy importer" });
 
@@ -286,7 +315,7 @@ test.describe("billing invariants", () => {
 
 test.describe("announcements", () => {
   test("each created key is announced with its own name", async ({ page }) => {
-    await page.goto("/api-meter/dashboard/keys/");
+    await page.goto(KEYS);
 
     const announcement = page.locator('p[aria-live="polite"]');
 
@@ -314,7 +343,7 @@ test.describe("announcements", () => {
 
 test.describe("endpoint ordering", () => {
   test("sorting by endpoint fully orders duplicate paths", async ({ page }) => {
-    await page.goto("/api-meter/dashboard/");
+    await page.goto(DASHBOARD);
 
     const table = page.getByRole("region", { name: "Endpoints" });
     await table.getByRole("button", { name: "Endpoint" }).click();
