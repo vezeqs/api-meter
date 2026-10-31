@@ -19,9 +19,9 @@ $ pnpm test:unit
 Four of the 61 tests fail. `pnpm build` then `pnpm test:unit` → `ℹ pass 61`,
 which isolates the cause.
 
-| # | Finding | Severity | Status |
-| --- | --- | --- | --- |
-| F1 | `pnpm test:unit` fails on a clean clone; the preview tests need a build | Medium | fixed, `pnpm test:unit` with `apps/web/out` absent |
+| #   | Finding                                                                 | Severity | Status                                             |
+| --- | ----------------------------------------------------------------------- | -------- | -------------------------------------------------- |
+| F1  | `pnpm test:unit` fails on a clean clone; the preview tests need a build | Medium   | fixed, `pnpm test:unit` with `apps/web/out` absent |
 
 ## F1 — `pnpm test:unit` needs `pnpm build` after all (Medium)
 
