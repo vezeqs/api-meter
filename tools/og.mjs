@@ -7,10 +7,10 @@ import { chromium } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { BASE_PATH, SITE_URL } from "../apps/web/lib/site.ts";
+import { BASE_PATH, SITE_URL } from "../apps/web/lib/site-config.mjs";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
-const OUTPUT = join(ROOT, "apps/web/public/og.png");
+const OUTPUT = process.env.OG_OUTPUT ?? join(ROOT, "apps/web/public/og.png");
 
 // Same coordinates the site uses, so the card cannot advertise a dead address.
 const DISPLAY_URL = `${SITE_URL.replace(/^https?:\/\//, "")}${BASE_PATH}`;

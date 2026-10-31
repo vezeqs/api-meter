@@ -1,0 +1,5 @@
+{
+  "name": "@production/tool-tests",
+  "private": true,
+  "type": "module"
+}

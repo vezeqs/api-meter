@@ -39,15 +39,16 @@ what.
 | 8   | No horizontal page overflow at 1440, 768, 390, or 320 px.                                                                                  | e2e "no horizontal page overflow"                                 |
 | 9   | Every text colour clears 4.5:1 in light and dark.                                                                                          | e2e axe-core, both themes                                         |
 | 10  | Every image the README shows exists and has the expected dimensions.                                                                       | unit `assets.test.ts`                                             |
-| 11  | No tool hardcodes the deployment host or the preview address.                                                                              | unit `tools.test.ts`                                              |
+| 11  | No tool hardcodes the deployment host or the preview port and subpath.                                                                     | unit `tools.test.ts`                                              |
 
 ## Commands
 
 ```sh
-pnpm verify      # format, lint, typecheck, build, unit, e2e — the proof
+pnpm verify      # format, lint, typecheck, build, unit, e2e, tool smoke — the proof
 pnpm dev         # http://localhost:3000/api-meter/
 pnpm test:unit   # fast, no browser, no build
 pnpm test:e2e    # needs `pnpm build`, plus a one-time `pnpm exec playwright install chromium`
+pnpm test:tools  # smoke-render the card and resolve the capture tool; needs Chromium
 pnpm capture     # regenerate docs/ after any visual change
 pnpm og          # regenerate apps/web/public/og.png
 ```
@@ -101,9 +102,24 @@ nodes it did not render during hydration, so the injection was gone before the
 assertion ran and the test passed. Change the source and rebuild; editing
 `apps/web/out` proves nothing.
 
-**Tools read the deployment URL from `lib/site.ts`.** `og.mjs` and
+**Tools read deployment coordinates from `site-config.mjs`.** `og.mjs` and
 `capture.mjs` once pasted the host, so a rename would have left the social card
-advertising a dead address.
+advertising a dead address. They now import `apps/web/lib/site-config.mjs`,
+which `site.ts` re-exports. Keep that module plain ESM: Node tools cannot
+import TypeScript, and the `.mjs` extension is what makes the import work
+without a bundler.
+
+**`HOST` binds; `CONNECT_HOST` connects.** `capture.mjs` once derived its
+client URL from `HOST`, which breaks when the server is bound to `0.0.0.0`.
+Keep the bind address and the connect address separate.
+
+**Request paths are untrusted input.** A bare `%` in the path made
+`decodeURIComponent` throw out of `serve-export.mjs`'s async handler and kill
+the process. Decode inside a guard and answer 404.
+
+**Asserting defaults requires setting them.** The preview-server test asserted
+`127.0.0.1` and `/api-meter` while inheriting `HOST`/`BASE_PATH` — the very
+overrides `.env.example` documents. Pin every variable the assertion names.
 
 **Test counts drift.** The README carried per-suite counts; they doubled in the
 commit after they were written. Counts belong in the dated changelog, not in a

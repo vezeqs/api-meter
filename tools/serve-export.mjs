@@ -46,7 +46,15 @@ async function resolveFile(pathname) {
 
   if (relative === "/" || relative === "") relative = "/index.html";
 
-  const candidate = normalize(join(ROOT, decodeURIComponent(relative)));
+  let decoded;
+  try {
+    decoded = decodeURIComponent(relative);
+  } catch {
+    // A bare % is a client error, not a reason to take the server down.
+    return null;
+  }
+
+  const candidate = normalize(join(ROOT, decoded));
 
   // Refuse anything that escapes the export directory.
   if (candidate !== ROOT.replace(/\/$/, "") && !candidate.startsWith(ROOT)) {

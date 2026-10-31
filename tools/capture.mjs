@@ -10,15 +10,17 @@
 import { spawn, execFileSync } from "node:child_process";
 import { mkdir, rm, readdir } from "node:fs/promises";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { chromium } from "@playwright/test";
-import { BASE_PATH } from "../apps/web/lib/site.ts";
+import { BASE_PATH } from "../apps/web/lib/site-config.mjs";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
 const DOCS = join(ROOT, "docs");
 const FRAMES = join(DOCS, ".frames");
+const HOST = process.env.HOST ?? "127.0.0.1";
+const CONNECT_HOST = process.env.CONNECT_HOST ?? "127.0.0.1";
 const PORT = Number(process.env.PORT ?? 4321);
-const BASE = `http://127.0.0.1:${PORT}${BASE_PATH}`;
+const BASE = `http://${CONNECT_HOST}:${PORT}${BASE_PATH}`;
 
 async function waitForServer(url, attempts = 60) {
   for (let attempt = 0; attempt < attempts; attempt += 1) {
@@ -42,7 +44,7 @@ async function main() {
   if (!(await waitForServer(`${BASE}/`))) {
     server = spawn(process.execPath, [join(ROOT, "tools/serve-export.mjs")], {
       cwd: ROOT,
-      env: { ...process.env, PORT: String(PORT), BASE_PATH },
+      env: { ...process.env, HOST, PORT: String(PORT), BASE_PATH },
       stdio: "ignore",
     });
 
@@ -166,7 +168,9 @@ async function main() {
   process.stdout.write("wrote docs/demo.gif\n");
 }
 
-main().catch((error) => {
-  process.stderr.write(`${error.stack ?? error}\n`);
-  process.exit(1);
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((error) => {
+    process.stderr.write(`${error.stack ?? error}\n`);
+    process.exit(1);
+  });
+}

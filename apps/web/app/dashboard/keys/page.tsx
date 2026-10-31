@@ -102,7 +102,7 @@ export default function KeysPage() {
   }
 
   const activeCount = keys.filter((key) => key.status === "active").length;
-  const createdName = createdId ? (keys.find((key) => key.id === createdId)?.name ?? "") : "";
+  const createdKey = createdId ? keys.find((key) => key.id === createdId) : undefined;
 
   return (
     <div className={styles.page}>
@@ -256,7 +256,7 @@ export default function KeysPage() {
       </div>
 
       <p className="visually-hidden" aria-live="polite">
-        {createdName ? `Key ${createdName} created and revealed.` : ""}
+        {createdKey ? `Key ${createdKey.name} (${createdKey.prefix}) created and revealed.` : ""}
       </p>
 
       <section className={styles.note} aria-labelledby="key-note-heading">

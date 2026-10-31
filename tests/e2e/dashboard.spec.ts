@@ -301,6 +301,14 @@ test.describe("announcements", () => {
     expect(first).toContain("Billing worker");
     expect(second).toContain("Reporting worker");
     expect(second, "a second creation must change the live region").not.toBe(first);
+
+    // A repeat name must still announce; the key's prefix keeps the text unique.
+    await page.getByLabel("New key name").fill("Billing worker");
+    await page.getByRole("button", { name: "Create key" }).click();
+    const third = await announcement.innerText();
+
+    expect(third).toContain("Billing worker");
+    expect(third, "a same-named creation must still announce").not.toBe(first);
   });
 });
 

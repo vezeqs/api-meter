@@ -4,9 +4,46 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `pnpm test:tools`: a smoke test that renders the Open Graph card to a
+  temporary file and checks that it is a non-empty PNG, plus a resolve-only
+  smoke test for `capture.mjs`.
+- Unit coverage that no tool imports TypeScript and that every tool parses as
+  an ES module.
+
+### Changed
+
+- Deployment coordinates live in `apps/web/lib/site-config.mjs`, a plain ESM
+  module imported by both the app and the Node tools. The tools no longer
+  import `site.ts`, so they do not depend on Node's TypeScript stripping.
+- `tools/capture.mjs` separates the server bind address (`HOST`) from the
+  client address (`CONNECT_HOST`). `HOST=0.0.0.0` now works, and the client
+  still connects to loopback by default.
+- README no longer pins a hand-typed line count; the command to measure it
+  remains.
+
+### Fixed
+
+- The 1.0.2 and 1.0.3 entries now carry the test counts they promise.
+- The audit's F18 wording now distinguishes the deployment host (moved out of
+  the tools) from the loopback origin used by the local preview.
+- The preview server crashed on a malformed percent-escape: a bare `%` in the
+  request path threw `URIError` out of the handler and killed the process. It
+  now answers 404 and keeps serving.
+- Creating a second API key under the same name announced nothing, because the
+  live-region text was unchanged. The key's prefix is announced too, so repeat
+  names still produce new text.
+- The preview-server test inherited the caller's `HOST` and `BASE_PATH` while
+  asserting their defaults; a non-default shell made it fail for no reason.
+
 ## [1.0.3] - 2026-10-31
 
 Maintenance. No change to what the dashboard reports.
+
+Test snapshot at tag: 41 unit passed, 45 e2e passed.
 
 ### Changed
 
@@ -27,8 +64,9 @@ Maintenance. No change to what the dashboard reports.
 
 ## [1.0.2] - 2026-10-31
 
-Second audit pass. Six findings, recorded in `docs/audit-2026-10-31.md`; the
-counts below are the snapshot this release was tagged with.
+Second audit pass. Six findings, recorded in `docs/audit-2026-10-31.md`.
+
+Test snapshot at tag: 40 unit passed, 44 e2e passed.
 
 ### Added
 
@@ -157,6 +195,7 @@ First tagged release. The dashboard is complete, audited, and deployed.
 - Issue templates, pull request template, and Dependabot configuration.
 - MIT license, security policy, contribution guide, and code of conduct.
 
+[Unreleased]: https://github.com/vezeqs/api-meter/compare/v1.0.3...HEAD
 [1.0.3]: https://github.com/vezeqs/api-meter/tree/v1.0.3
 [1.0.2]: https://github.com/vezeqs/api-meter/tree/v1.0.2
 [1.0.1]: https://github.com/vezeqs/api-meter/tree/v1.0.1
