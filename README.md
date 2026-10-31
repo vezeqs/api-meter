@@ -110,14 +110,15 @@ confirmation, key creation, and the four billing invariants above.
 
 ## Code review
 
-The repository has been audited three times, each pass recorded in a dated
+The repository has been audited four times, each pass recorded in a dated
 file under `docs/` with a command that reproduces every finding before it was
 fixed: [fifteen findings](docs/audit-2026-10-30.md) including two billing
 defects and a false claim in this README, [six more](docs/audit-2026-10-31.md)
-mostly in the verification itself, and [fourteen](docs/audit-2026-10-31-third-pass.md)
+mostly in the verification itself, [fourteen](docs/audit-2026-10-31-third-pass.md)
 in the third pass — a preview server that dies on a malformed `Host` header,
 an OG card quoting quotas the product disowns, and a `pnpm test:unit` that
-secretly needed a build.
+secretly needed a build — and [one more](docs/audit-2026-10-31-fourth-pass.md)
+in the fourth: the same build dependency, still present in the preview tests.
 
 ## Stack
 

@@ -151,6 +151,12 @@ positioned by percentage — the sparkline learned this first.
 `^build` ran first. The `source` export condition points the suite at `src/`.
 If a command needs a build, say so — or make it not.
 
+**The preview tests serve a fixture, not the export.** `serve-export.mjs` takes
+`EXPORT_ROOT` for that reason, and `tests/unit/tools.test.ts` points it at a
+two-file temp directory. Repointing it at `apps/web/out` makes `pnpm test:unit`
+require `pnpm build` again — the same clean-clone bug as above, which survived
+the third pass because CI builds first.
+
 **Decorative numbers drift.** The OG card typed "1.84M/2.00M" and "Seats 3 of
 5" — a meter F7 removed for contradicting the plan record. Any surface that
 shows plan or cycle figures derives them or carries a test pinning them to
