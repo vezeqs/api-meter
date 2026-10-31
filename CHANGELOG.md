@@ -4,6 +4,23 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.5] - 2026-10-31
+
+Fourth audit pass. One finding, recorded in
+`docs/audit-2026-10-31-fourth-pass.md`.
+
+### Fixed
+
+- `pnpm test:unit` failed on a clean clone. The four preview-server tests served
+  `apps/web/out`, which only exists after `pnpm build`, so a fresh checkout saw
+  `404 !== 200` in `tests/unit/tools.test.ts`. `serve-export.mjs` now accepts
+  `EXPORT_ROOT`, and the suite serves a two-file fixture, so the unit command no
+  longer depends on a build. The default root is unchanged, which is what
+  `pnpm preview` and the Playwright suite use.
+
+This is the same invariant the third pass fixed for `@production/shared`; CI
+builds before it tests, which is why both hid there.
+
 ## [1.0.4] - 2026-10-31
 
 Third audit pass. Fourteen findings, recorded in

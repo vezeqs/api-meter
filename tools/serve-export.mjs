@@ -9,11 +9,18 @@
  */
 import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
-import { extname, join, normalize } from "node:path";
+import { extname, join, normalize, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { BASE_PATH as SITE_BASE_PATH } from "../apps/web/lib/site-config.mjs";
 
-const ROOT = normalize(fileURLToPath(new URL("../apps/web/out/", import.meta.url)));
+// EXPORT_ROOT lets the unit suite serve a fixture instead of the build output,
+// so `pnpm test:unit` does not need `pnpm build` first. The default is the
+// real export, which is what `pnpm preview` and the Playwright suite use.
+const ROOT = normalize(
+  process.env.EXPORT_ROOT
+    ? resolve(process.env.EXPORT_ROOT)
+    : fileURLToPath(new URL("../apps/web/out/", import.meta.url)),
+);
 
 // The mount defaults to the site's own base path so the documented
 // NEXT_PUBLIC_BASE_PATH drives the build and the preview identically.
