@@ -55,8 +55,15 @@ export function formatUsd(value: number, fractionDigits = 2): string {
   }).format(value);
 }
 
-/** 0.184 -> "+18.4%". Ratio, not a percentage. */
+/**
+ * 0.184 -> "+18.4%". Takes a ratio, not a percentage.
+ *
+ * A change from zero has no meaningful percentage, so a non-finite ratio is
+ * rendered as a dash rather than the "+100%" the old fallback produced.
+ */
 export function formatDelta(ratio: number): string {
+  if (!Number.isFinite(ratio)) return "—";
+
   const percent = ratio * 100;
   const sign = percent > 0 ? "+" : "";
   return `${sign}${percent.toFixed(1)}%`;

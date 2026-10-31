@@ -139,6 +139,7 @@ Requires Node 24 (see `.nvmrc`) and pnpm 10.34.8 (pinned in `packageManager`).
 
 ```sh
 pnpm install
+pnpm exec playwright install chromium   # once, for the end-to-end suite
 pnpm build
 pnpm preview
 ```

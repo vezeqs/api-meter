@@ -3,17 +3,15 @@ interface SparklineProps {
   width?: number;
   height?: number;
   className?: string;
-  /** Adds a dot on the final point so the latest value is readable. */
-  markLast?: boolean;
 }
 
-export function Sparkline({
-  values,
-  width = 120,
-  height = 24,
-  className,
-  markLast = false,
-}: SparklineProps) {
+/**
+ * The chart is drawn with preserveAspectRatio="none" so it can stretch to any
+ * container width. That also means any shape inside it is stretched: a dot
+ * becomes an ellipse on a narrow screen. Only the line is drawn here, and the
+ * stroke is kept uniform with non-scaling-stroke.
+ */
+export function Sparkline({ values, width = 120, height = 24, className }: SparklineProps) {
   if (values.length < 2) {
     return <svg className={className} width={width} height={height} aria-hidden="true" />;
   }
@@ -35,10 +33,6 @@ export function Sparkline({
     return `${x.toFixed(2)},${y.toFixed(2)}`;
   });
 
-  const last = values[values.length - 1] ?? 0;
-  const lastX = (values.length - 1) * stepX;
-  const lastY = height - ((last - min) / span) * height;
-
   return (
     <svg
       className={className}
@@ -56,7 +50,6 @@ export function Sparkline({
         strokeLinecap="round"
         vectorEffect="non-scaling-stroke"
       />
-      {markLast ? <circle cx={lastX} cy={lastY} r={1.75} fill="currentColor" /> : null}
     </svg>
   );
 }

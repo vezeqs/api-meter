@@ -103,7 +103,6 @@ export default function LandingPage() {
                 width={160}
                 height={36}
                 className={styles.specimenSpark}
-                markLast
               />
             </div>
           </div>

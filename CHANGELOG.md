@@ -4,6 +4,27 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2026-10-31
+
+Maintenance. No change to what the dashboard reports.
+
+### Changed
+
+- Every GitHub Action is on its current major: `checkout` v7, `setup-node` v7,
+  `pnpm/action-setup` v6, `configure-pages` v6, `upload-pages-artifact` v5,
+  `deploy-pages` v5. This clears the Node 20 deprecation warning that the
+  runners had been printing.
+- Endpoint sorting falls back to path then method, so two endpoints that share
+  a path have a defined order instead of inheriting whatever order the rows
+  arrived in.
+- A change from a zero baseline renders as a dash. It previously claimed
+  `+100%`, which is a fabricated figure for growth from nothing.
+
+### Removed
+
+- The sparkline's end dot. The chart stretches with
+  `preserveAspectRatio="none"`, so the dot became a visible ellipse at 390 px.
+
 ## [1.0.2] - 2026-10-31
 
 Second audit pass. Six findings, recorded in `docs/audit-2026-10-31.md`; the
@@ -136,6 +157,7 @@ First tagged release. The dashboard is complete, audited, and deployed.
 - Issue templates, pull request template, and Dependabot configuration.
 - MIT license, security policy, contribution guide, and code of conduct.
 
+[1.0.3]: https://github.com/vezeqs/api-meter/tree/v1.0.3
 [1.0.2]: https://github.com/vezeqs/api-meter/tree/v1.0.2
 [1.0.1]: https://github.com/vezeqs/api-meter/tree/v1.0.1
 [1.0.0]: https://github.com/vezeqs/api-meter/tree/v1.0.0

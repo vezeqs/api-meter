@@ -47,7 +47,7 @@ what.
 pnpm verify      # format, lint, typecheck, build, unit, e2e — the proof
 pnpm dev         # http://localhost:3000/api-meter/
 pnpm test:unit   # fast, no browser, no build
-pnpm test:e2e    # needs pnpm build first; runs against apps/web/out
+pnpm test:e2e    # needs `pnpm build`, plus a one-time `pnpm exec playwright install chromium`
 pnpm capture     # regenerate docs/ after any visual change
 pnpm og          # regenerate apps/web/public/og.png
 ```

@@ -303,3 +303,34 @@ test.describe("announcements", () => {
     expect(second, "a second creation must change the live region").not.toBe(first);
   });
 });
+
+test.describe("endpoint ordering", () => {
+  test("sorting by endpoint fully orders duplicate paths", async ({ page }) => {
+    await page.goto("/api-meter/dashboard/");
+
+    const table = page.getByRole("region", { name: "Endpoints" });
+    await table.getByRole("button", { name: "Endpoint" }).click();
+    await expect(table.locator('th[aria-sort="ascending"]')).toHaveCount(1);
+
+    const rows = page.locator('section[aria-labelledby="endpoints-heading"] tbody tr');
+    const count = await rows.count();
+    const pairs: Array<{ path: string; method: string }> = [];
+
+    for (let index = 0; index < count; index += 1) {
+      const cell = rows.nth(index).locator("th").first();
+      const method = await cell.locator("span").first().innerText();
+      const path = await cell.locator("span").nth(1).innerText();
+      pairs.push({ path, method });
+    }
+
+    // Two endpoints share /v1/events. Without a tie-break their order would
+    // depend on whatever order the rows happened to arrive in.
+    const shared = pairs.filter((pair) => pair.path === "/v1/events");
+    expect(shared.length).toBe(2);
+
+    const ordered = [...pairs].sort(
+      (a, b) => a.path.localeCompare(b.path) || a.method.localeCompare(b.method),
+    );
+    expect(pairs).toEqual(ordered);
+  });
+});

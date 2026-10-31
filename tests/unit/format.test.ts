@@ -52,6 +52,12 @@ describe("formatDelta", () => {
     assert.equal(formatDelta(-0.05), "-5.0%");
     assert.equal(formatDelta(0), "0.0%");
   });
+
+  it("renders an undefined change as a dash", () => {
+    // A change from zero has no percentage. The old fallback claimed +100%.
+    assert.equal(formatDelta(Number.NaN), "—");
+    assert.equal(formatDelta(Number.POSITIVE_INFINITY), "—");
+  });
 });
 
 describe("formatDayRange", () => {

@@ -24,6 +24,11 @@ const RANGE_LABELS: Record<TimeRange, string> = {
   "90d": "last 90 days",
 };
 
+/** A change from zero has no percentage; say so instead of inventing one. */
+function deltaNote(change: number): string {
+  return Number.isFinite(change) ? `${formatDelta(change)} vs previous` : "no prior period";
+}
+
 interface StatProps {
   label: string;
   value: string;
@@ -84,13 +89,13 @@ export default function OverviewPage() {
         <Stat
           label="Requests"
           value={formatCompact(summary.requests)}
-          note={`${formatDelta(summary.deltas.requests)} vs previous`}
+          note={deltaNote(summary.deltas.requests)}
           series={summary.daily.map((entry) => entry.requests)}
         />
         <Stat
           label="Error rate"
           value={formatRate(errorRate)}
-          note={`${formatDelta(summary.deltas.errorRate)} vs previous`}
+          note={deltaNote(summary.deltas.errorRate)}
           noteTone={summary.deltas.errorRate > 0 ? "bad" : "neutral"}
         />
         <Stat

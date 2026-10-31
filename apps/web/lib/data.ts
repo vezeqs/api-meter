@@ -152,8 +152,14 @@ function sum(values: readonly number[]): number {
   return values.reduce((total, value) => total + value, 0);
 }
 
+/**
+ * A change from zero has no meaningful ratio. Returning 1 for it — the old
+ * behaviour — reported "+100%" for growth from nothing, which is both wrong and
+ * invisible in a formatted number. NaN is carried through and rendered as a
+ * dash.
+ */
 function ratio(current: number, previous: number): number {
-  if (previous === 0) return current === 0 ? 0 : 1;
+  if (previous === 0) return current === 0 ? 0 : Number.NaN;
   return (current - previous) / previous;
 }
 

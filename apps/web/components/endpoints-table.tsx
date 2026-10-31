@@ -20,10 +20,16 @@ const NUMERIC_COLUMNS: ReadonlyArray<{ key: SortKey; label: string }> = [
 ];
 
 function compare(a: EndpointStat, b: EndpointStat, key: SortKey): number {
+  // Every comparison falls back to path then method, so the order is fully
+  // determined. Two endpoints share /v1/events, and without a tie-break their
+  // relative position would depend on whatever order the rows arrived in.
+  const byName = a.path.localeCompare(b.path) || a.method.localeCompare(b.method);
+
   if (key === "path") {
-    return a.path.localeCompare(b.path);
+    return byName;
   }
-  return a[key] - b[key];
+
+  return a[key] - b[key] || byName;
 }
 
 export function EndpointsTable({ endpoints }: EndpointsTableProps) {
